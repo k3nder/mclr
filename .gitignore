@@ -1,0 +1,12 @@
+target
+.idea
+!/OpenJDK21U-jre_x64_windows_hotspot_21.0.3_9.zip
+!/OpenJDK8U-jre_x64_windows_hotspot_8u382b05.zip
+!/1.20.8.json
+!/h.json
+!/saves/
+!/resourcepacks/
+!/logs/
+!/libs/
+!/downloads/
+!/desy/
