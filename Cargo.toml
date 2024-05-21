@@ -2,6 +2,14 @@
 name = "mclr"
 version = "0.1.0"
 edition = "2021"
+authors = ["k3nder"]
+rust-version = "1.71.0"
+description = "run mc in rust"
+documentation = ""
+readme = "README.md"
+homepage = ""
+repository = "https://github.com/k3nder/mclr.git"
+license = "Apache-2.0"
 
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
 
