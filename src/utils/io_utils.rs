@@ -32,9 +32,9 @@ pub async fn get_string(url: &str) -> Result<String, Error> {
 pub fn download(file_str: &str, url: &str) {
     let url_string = url.to_string();
     let request = get(&url_string);
-    println!("{}:{}", url, file_str);
+    //println!("{}:{}", url, file_str);
     let bytes = Runtime::new().unwrap().block_on(request).expect("error");
-    println!("{}", file_str);
+    //println!("{}", file_str);
 
     // Obtener el directorio padre del archivo
     let parent_dir = match std::path::Path::new(file_str).parent() {
@@ -59,7 +59,7 @@ pub fn download(file_str: &str, url: &str) {
         eprintln!("Error al escribir en el archivo: {}", err);
         return;
     }
-    println!("Archivo descargado correctamente.");
+    //println!("Archivo descargado correctamente.");
 }
 
 pub mod compress {
@@ -75,7 +75,7 @@ pub mod compress {
 
     pub fn extract_zip(destination: &str, file_str: &str) {
         let filepath = Path::new(file_str);
-        println!("{}", filepath.display());
+        //println!("{}", filepath.display());
         let file = std::fs::File::open(&filepath).unwrap();
         let mut archive = ZipArchive::new(file).unwrap();
 

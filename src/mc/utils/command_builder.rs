@@ -10,7 +10,8 @@ pub struct Command {
     pub(crate) assets: CommandAssetsConfig,
     pub(crate) user: CommandUserConfig,
     pub(crate) version: CommandVersionConfig,
-    pub(crate) ram: CommandRamConfig
+    pub(crate) ram: CommandRamConfig,
+    pub(crate) event: fn(String)
 }
 pub struct CommandResourcesConfig {
     pub(crate) libraries: String,
@@ -75,7 +76,7 @@ impl Command {
         // Leer la salida del proceso hijo de manera asíncrona
         let reader = BufReader::new(stdout);
         for line in reader.lines() {
-            println!("{}", line.unwrap());
+            (self.event)(line.unwrap())
         }
 
         // Esperar a que el proceso hijo termine

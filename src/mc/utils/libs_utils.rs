@@ -9,11 +9,12 @@ use std::ptr::null;
 use tokio::io::join;
 use crate::deserialize::json_version::{Library, LibraryDownloads, LibraryDownloadsArtifacts, LibraryDownloadsClassifiers, LibraryRule, LibraryRuleOs};
 use crate::mc;
-use crate::utils::io_utils;
+use crate::utils::{CounterEvent, HandleEvent, io_utils};
 use crate::utils::io_utils::get_resource_name;
 use crate::utils::io_utils::system::OperatingSystem;
 
-pub fn get_libs(destination: &str, binary_destination: &str, libs: &Vec<Library>) -> Result<(), Box<dyn std::error::Error>> {
+pub fn get_libs(destination: &str, binary_destination: &str, libs: &Vec<Library>, event: HandleEvent<CounterEvent>) -> Result<(), Box<dyn std::error::Error>> {
+    let mut index = 0;
     for lib in libs {
         let downloads = match &lib.downloads {
             Some(d) => (false, d),  // Si hay descargas, no es None
@@ -21,18 +22,19 @@ pub fn get_libs(destination: &str, binary_destination: &str, libs: &Vec<Library>
         };
 
         if downloads.0 {
-            println!("cust:");
             get_customs_libs(&lib, destination)?;
             continue;
         }
 
         if is_allowed_library(&lib) {
-            println!("downloading... {}", &lib.name);
+            //println!("downloading... {}", &lib.name);
             let lib_name = download(destination, downloads.1);
             if !&lib.extract.is_none() {
                 io_utils::compress::extract_zip(binary_destination, format!("{}\\{}", destination, lib_name).as_str());
             }
         }
+        index += 1;
+        (event.event)(CounterEvent::new(libs.len(), index))
     }
 
     Ok(())
@@ -50,7 +52,7 @@ fn is_allowed_library(lib: &Library) -> bool {
         allow_download = find_out_os(rules);
     } else if let Some(downloads) = &lib.downloads {
         allow_download = comprove_classifiers(downloads);
-        println!("{}", allow_download);
+        //println!("{}", allow_download);
     }
     allow_download
 }
@@ -99,7 +101,7 @@ fn comprove_classifiers(downloads: &LibraryDownloads) -> bool {
         result = is_os(result, windows32);
     }
     if let Some(ref nwin) = classifiers.natives_windows {
-        println!("natives");
+        //println!("natives");
         result = true;
     }
     result
@@ -108,7 +110,7 @@ fn comprove_classifiers(downloads: &LibraryDownloads) -> bool {
 
 fn is_os(def: bool, x: &LibraryDownloadsArtifacts) -> bool {
     let target_os = OperatingSystem::detect();
-    println!("{:?}", target_os);
+    //println!("{:?}", target_os);
     return match target_os {
         OperatingSystem::Windows => {
             true
