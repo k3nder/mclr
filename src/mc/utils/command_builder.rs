@@ -4,40 +4,40 @@ use std::process::Stdio;
 use crate::deserialize::json_version::LibraryNatives;
 
 pub struct Command {
-    pub(crate) resources: CommandResourcesConfig,
-    pub(crate) java_home: String,
-    pub(crate) game_dir: String,
-    pub(crate) assets: CommandAssetsConfig,
-    pub(crate) user: CommandUserConfig,
-    pub(crate) version: CommandVersionConfig,
-    pub(crate) ram: CommandRamConfig,
-    pub(crate) event: fn(String)
+    pub resources: CommandResourcesConfig,
+    pub java_home: String,
+    pub game_dir: String,
+    pub assets: CommandAssetsConfig,
+    pub user: CommandUserConfig,
+    pub version: CommandVersionConfig,
+    pub ram: CommandRamConfig,
+    pub event: fn(String)
 }
 pub struct CommandResourcesConfig {
-    pub(crate) libraries: String,
-    pub(crate) jar_file: String,
-    pub(crate) bin: String
+    pub libraries: String,
+    pub jar_file: String,
+    pub bin: String
 }
 pub struct CommandRamConfig {
-    pub(crate) xmx: i32,
-    pub(crate) xms: i32
+    pub xmx: i32,
+    pub xms: i32
 }
 pub struct CommandAssetsConfig {
-    pub(crate) assets_dir: String,
-    pub(crate) assets_index: String
+    pub assets_dir: String,
+    pub assets_index: String
 }
 pub struct CommandVersionConfig {
-    pub(crate) version_id: String,
-    pub(crate) version_type: String,
-    pub(crate) main_class: String
+    pub version_id: String,
+    pub version_type: String,
+    pub main_class: String
 }
 pub struct CommandUserConfig {
-    pub(crate) user_type: String,
-    pub(crate) client_id: String,
-    pub(crate) uuid: String,
-    pub(crate) xuid: String,
-    pub(crate) access_token: String,
-    pub(crate) user_name: String
+    pub user_type: String,
+    pub client_id: String,
+    pub uuid: String,
+    pub xuid: String,
+    pub access_token: String,
+    pub user_name: String
 }
 impl Command {
     pub fn run(&self) {
