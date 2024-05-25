@@ -1,7 +1,7 @@
+use std::string::String;
 use std::fmt::format;
 use std::fs;
 use std::path::Path;
-use serde_json::Value::String;
 use crate::deserialize::assets::Assets;
 use crate::deserialize::json_version::JsonVersion;
 use crate::utils::{CounterEvent, HandleEvent, io_utils};
@@ -42,7 +42,7 @@ pub fn download_all_url(destination: &str, json_version: &JsonVersion, event: Ha
         }
         if !Path::new(&path).exists() {
             download(&path, &url);
-            on_download.event(&path);
+            on_download.event(path);
         }
         index += 1;
         event.event(CounterEvent::new(assets.objects.len(), index))
