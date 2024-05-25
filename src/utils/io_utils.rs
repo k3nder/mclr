@@ -64,7 +64,7 @@ pub fn download(file_str: &str, url: &str) {
 
 pub mod compress {
     use std::fs::create_dir_all;
-    use std::io;
+    use std::{fs, io};
     use std::io::{BufReader, Read, Write};
     use std::path::{Path, PathBuf};
     use flate2::read::GzDecoder;
@@ -147,6 +147,7 @@ pub mod compress {
         let FILE: &str = binding.as_str();
         io_utils::download(FILE, url);
         extract(destination, FILE);
+        fs::remove_file(FILE).expect("Cannot remove temp file jre");
     }
 }
 
