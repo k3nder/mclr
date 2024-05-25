@@ -4,7 +4,6 @@ use std::path::Path;
 use serde_json::Value::String;
 use crate::deserialize::assets::Assets;
 use crate::deserialize::json_version::JsonVersion;
-use crate::mc;
 use crate::utils::{CounterEvent, HandleEvent, io_utils};
 use crate::utils::io_utils::download;
 
@@ -17,11 +16,11 @@ pub fn save_indexes_load(file_str: &str, json: &JsonVersion) -> Assets {
     return serde_json::from_str(&content.as_str()).unwrap();
 }
 
-pub fn download_all(destination: &str, json_version: &JsonVersion, event: HandleEvent<CounterEvent>) {
-    download_all_url(destination, json_version, event, BASE_URL)
+pub fn download_all(destination: &str, json_version: &JsonVersion,on_download: HandleEvent<String> , event: HandleEvent<CounterEvent>) {
+    download_all_url(destination, json_version, event, on_download, BASE_URL)
 }
-pub fn download_all_url(destination: &str, json_version: &JsonVersion, event: HandleEvent<CounterEvent>, url: &str) {
-    let assets = &mc::utils::assets_utils::save_indexes_load(format!("{}\\indexes\\{}.json", destination, json_version.assets.as_str()).as_str(), json_version);
+pub fn download_all_url(destination: &str, json_version: &JsonVersion, event: HandleEvent<CounterEvent>, on_download: HandleEvent<String>, url: &str) {
+    let assets = &save_indexes_load(format!("{}\\indexes\\{}.json", destination, json_version.assets.as_str()).as_str(), json_version);
     let mut index = 0;
     for (key, value) in &assets.objects {
         let hash = &value.hash;
@@ -43,6 +42,7 @@ pub fn download_all_url(destination: &str, json_version: &JsonVersion, event: Ha
         }
         if !Path::new(&path).exists() {
             download(&path, &url);
+            on_download.event(&path);
         }
         index += 1;
         event.event(CounterEvent::new(assets.objects.len(), index))
