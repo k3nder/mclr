@@ -4,24 +4,36 @@ use io_utils::system::OperatingSystem;
 use crate::deserialize::json_version::{Client, JavaVersion, JsonVersion};
 
 pub struct JreUrls {
-    pub windows: JreUrl,
-    pub other: JreUrl
+    pub windows: Box<JreUrl>,
+    pub other: Box<JreUrl>
 }
 pub struct JreUrl {
-    pub jre8: str,
-    pub jre22: str
+    pub jre8: String,
+    pub jre22: String
 }
-pub fn get_compatible_java_urls(destination: &str, version: &JavaVersion) -> String {
+pub fn get_compatible_java(destination: &str, version: &JavaVersion) -> String {
+    get_compatible_java_urls(destination, version, JreUrls {
+        windows: Box::new(JreUrl {
+            jre8: "https://github.com/adoptium/temurin8-binaries/releases/download/jdk8u382-b05/OpenJDK8U-jre_x64_windows_hotspot_8u382b05.zip".to_string(),
+            jre22: "https://github.com/adoptium/temurin21-binaries/releases/download/jdk-21.0.3%2B9/OpenJDK21U-jre_x64_windows_hotspot_21.0.3_9.zip".to_string()
+        }),
+        other: Box::new(JreUrl {
+            jre8: "https://github.com/adoptium/temurin8-binaries/releases/download/jdk8u392-b08/OpenJDK8U-jdk_x64_linux_hotspot_8u392b08.tar.gz".to_string(),
+            jre22: "https://github.com/adoptium/temurin21-binaries/releases/download/jdk-21.0.3%2B9/OpenJDK21U-jre_x64_linux_hotspot_21.0.3_9.tar.gz".to_string()
+        }),
+    })
+}
+pub fn get_compatible_java_urls(destination: &str, version: &JavaVersion, urls: JreUrls) -> String {
     let system: OperatingSystem = OperatingSystem::detect();
 
     let jre8: &str = match system {
-        OperatingSystem::Windows => "https://github.com/adoptium/temurin8-binaries/releases/download/jdk8u382-b05/OpenJDK8U-jre_x64_windows_hotspot_8u382b05.zip",
-        _ => "https://github.com/adoptium/temurin8-binaries/releases/download/jdk8u392-b08/OpenJDK8U-jdk_x64_linux_hotspot_8u392b08.tar.gz",
+        OperatingSystem::Windows => urls.windows.jre8.as_str(),
+        _ => urls.other.jre8.as_str(),
     };
 
     let jre20: &str = match system {
-        OperatingSystem::Windows => "https://github.com/adoptium/temurin21-binaries/releases/download/jdk-21.0.3%2B9/OpenJDK21U-jre_x64_windows_hotspot_21.0.3_9.zip",
-        _ => "https://github.com/adoptium/temurin21-binaries/releases/download/jdk-21.0.3%2B9/OpenJDK21U-jre_x64_linux_hotspot_21.0.3_9.tar.gz",
+        OperatingSystem::Windows => urls.windows.jre22.as_str(),
+        _ => urls.other.jre22.as_str(),
     };
 
     compress::download(&jre8, format!("{destination}/8").as_str());
