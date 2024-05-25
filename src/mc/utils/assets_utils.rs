@@ -42,7 +42,7 @@ pub fn download_all_url(destination: &str, json_version: &JsonVersion, event: Ha
         }
         if !Path::new(&path).exists() {
             download(&path, &url);
-            on_download.event(path);
+            on_download.event(url);
         }
         index += 1;
         event.event(CounterEvent::new(assets.objects.len(), index))

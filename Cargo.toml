@@ -1,6 +1,6 @@
 [package]
 name = "mclr"
-version = "1.0.0-b"
+version = "1.0.0-b2"
 edition = "2021"
 authors = ["k3nder"]
 rust-version = "1.71.0"
@@ -16,8 +16,8 @@ license = "Apache-2.0"
 [dependencies]
 serde = { version = "1.0.201", features = ["derive"] }
 bytes = "1.6.0"
-reqwest = "0.12.4"
-tokio = { version = "1.0.0", features = ["rt", "rt-multi-thread", "macros"] }
+reqwest = { version = "0.12.4", features = ["blocking", "json"] }
+tokio = { version = "1", features = ["full"] }
 serde_json = "1.0.117"
 zip = "2.1.0"
 tar = "0.4.40"

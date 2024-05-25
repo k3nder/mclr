@@ -1,8 +1,10 @@
 use std::fs;
 use std::fs::File;
-use std::io::Write;
+use std::io::{copy, Read, Write};
+use std::path::{Path, PathBuf};
+use std::time::Duration;
 use bytes::Bytes;
-use reqwest::Error;
+use reqwest::{Client, Error};
 use serde::de::DeserializeOwned;
 use tokio::runtime::Runtime;
 use crate::utils::sync_utils::sync;
@@ -16,8 +18,9 @@ pub async fn get(url: &String) -> Result<Bytes, Error> {
         Err(err) => {
             Err(err)
         }
-    }
+    };
 }
+
 pub async fn get_string(url: &str) -> Result<String, Error> {
     return match reqwest::get(url).await {
         Ok(response) => {
@@ -27,39 +30,43 @@ pub async fn get_string(url: &str) -> Result<String, Error> {
         Err(err) => {
             Err(err)
         }
+    };
+}
+
+fn fetch_data(url: &str) -> Result<Bytes, Error> {
+    let client = Client::new();
+    let response = sync().block_on(client.get(url)
+        .timeout(Duration::from_secs(10)) // Establece un timeout de 10 segundos
+        .send()).unwrap()
+        .error_for_status();
+
+    Ok(sync().block_on(response.unwrap().bytes()).unwrap())
+}
+
+pub fn download(file_str: &str, url: &str) {
+    // Realiza la solicitud GET para obtener el contenido del archivo
+
+    let response = reqwest::blocking::get(url);
+    match response {
+        Ok(response) => {
+            let parent_dir = get_parent_directory(Path::new(file_str)).unwrap();
+            if !parent_dir.exists() { fs::create_dir_all(parent_dir).expect("Cannot create dir") }
+            // Abre un archivo en modo de escritura para guardar el contenido descargado
+            let mut dest = File::create(file_str).unwrap();
+
+            // Copia el contenido de la respuesta HTTP al archivo
+            let content = response.bytes().unwrap();
+            copy(&mut content.as_ref(), &mut dest).unwrap();
+        }
+        Err(e) => {
+            download(file_str, url);
+        }
     }
 }
-pub fn download(file_str: &str, url: &str) {
-    let url_string = url.to_string();
-    let request = get(&url_string);
-    //println!("{}:{}", url, file_str);
-    let bytes = Runtime::new().unwrap().block_on(request).expect("error");
-    //println!("{}", file_str);
 
-    // Obtener el directorio padre del archivo
-    let parent_dir = match std::path::Path::new(file_str).parent() {
-        Some(parent) => parent,
-        None => {
-            eprintln!("No se puede obtener el directorio padre del archivo.");
-            return;
-        }
-    };
-
-    // Verificar si el directorio padre existe, si no existe, crearlo
-    if !parent_dir.exists() {
-        if let Err(err) = fs::create_dir_all(parent_dir) {
-            eprintln!("Error al crear el directorio: {}", err);
-            return;
-        }
-    }
-
-    let mut file = File::create(file_str).expect("error");
-    let byte_slice: &[u8] = bytes.as_ref();
-    if let Err(err) = file.write_all(byte_slice) {
-        eprintln!("Error al escribir en el archivo: {}", err);
-        return;
-    }
-    //println!("Archivo descargado correctamente.");
+fn get_parent_directory(path: &Path) -> Option<PathBuf> {
+    // Usa el método 'parent' para obtener el directorio padre
+    path.parent().map(|p| p.to_path_buf())
 }
 
 pub mod compress {
@@ -98,6 +105,7 @@ pub mod compress {
             }
         }
     }
+
     pub fn is_tar_gz(file_path: &str) -> io::Result<bool> {
         let mut file = std::fs::File::open(file_path).unwrap();
 
@@ -129,9 +137,9 @@ pub mod compress {
     }
 
     pub fn extract(destination: &str, file_str: &str) {
-        if is_zip(file_str).unwrap() { extract_zip(destination, file_str); }
-        else if is_tar_gz(file_str).unwrap() { extract_tar(destination, file_str); }
+        if is_zip(file_str).unwrap() { extract_zip(destination, file_str); } else if is_tar_gz(file_str).unwrap() { extract_tar(destination, file_str); }
     }
+
     pub fn extract_tar(destination: &str, file_str: &str) {
         let tar_gz_path = Path::new(file_str);
         let tar_gz = std::fs::File::open(&tar_gz_path).unwrap();
@@ -142,6 +150,7 @@ pub mod compress {
         let output_dir = Path::new(destination);
         archive.unpack(output_dir).unwrap()
     }
+
     pub fn download(url: &str, destination: &str) {
         let binding = get_resource_name(url).unwrap();
         let FILE: &str = binding.as_str();
@@ -163,6 +172,7 @@ pub fn get_resource_name(url_str: &str) -> Option<String> {
     // Devuelve una copia del último segmento de la ruta (nombre del recurso)
     path_segments.last().map(|s| s.to_string())
 }
+
 pub mod system {
     #[derive(Debug)]
     pub enum OperatingSystem {
