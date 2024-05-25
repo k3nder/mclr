@@ -1,13 +1,17 @@
-use std::fmt::format;
-use std::path::Path;
-use serde_json::json;
 use crate::utils::io_utils;
 use crate::utils::io_utils::{compress};
 use io_utils::system::OperatingSystem;
-use crate::deserialize::json_version::{Client, ClientDownloads, JavaVersion, JsonVersion};
+use crate::deserialize::json_version::{Client, JavaVersion, JsonVersion};
 
-
-pub fn get_compatible_java(destination: &str, version: &JavaVersion) -> String {
+pub struct JreUrls {
+    pub windows: JreUrl,
+    pub other: JreUrl
+}
+pub struct JreUrl {
+    pub jre8: str,
+    pub jre22: str
+}
+pub fn get_compatible_java_urls(destination: &str, version: &JavaVersion) -> String {
     let system: OperatingSystem = OperatingSystem::detect();
 
     let jre8: &str = match system {

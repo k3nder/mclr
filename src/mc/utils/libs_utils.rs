@@ -34,7 +34,7 @@ pub fn get_libs(destination: &str, binary_destination: &str, libs: &Vec<Library>
             }
         }
         index += 1;
-        (event.event)(CounterEvent::new(libs.len(), index))
+        event.event(CounterEvent::new(libs.len(), index));
     }
 
     Ok(())
@@ -51,7 +51,7 @@ fn is_allowed_library(lib: &Library) -> bool {
     if let Some(rules) = &lib.rules {
         allow_download = find_out_os(rules);
     } else if let Some(downloads) = &lib.downloads {
-        allow_download = comprove_classifiers(downloads);
+        allow_download = find_out_classifiers(downloads);
         //println!("{}", allow_download);
     }
     allow_download
@@ -85,22 +85,22 @@ fn find_out_os(rules: &[LibraryRule]) -> bool {
     false
 }
 
-fn comprove_classifiers(downloads: &LibraryDownloads) -> bool {
+fn find_out_classifiers(downloads: &LibraryDownloads) -> bool {
     if downloads.classifiers.is_none() {
         return true;
     }
     let classifiers = downloads.classifiers.as_ref().unwrap();
     let mut result = false;
     if let Some(ref windows) = classifiers.windows {
-        result = is_os(result, windows);
+        result = is_os(result);
     }
     if let Some(ref windows64) = classifiers.windows64 {
-        result = is_os(result, windows64);
+        result = is_os(result);
     }
     if let Some(ref windows32) = classifiers.windows32 {
-        result = is_os(result, windows32);
+        result = is_os(result);
     }
-    if let Some(ref nwin) = classifiers.natives_windows {
+    if let Some(ref natives_win) = classifiers.natives_windows {
         //println!("natives");
         result = true;
     }
@@ -108,9 +108,8 @@ fn comprove_classifiers(downloads: &LibraryDownloads) -> bool {
 }
 
 
-fn is_os(def: bool, x: &LibraryDownloadsArtifacts) -> bool {
+fn is_os(def: bool) -> bool {
     let target_os = OperatingSystem::detect();
-    //println!("{:?}", target_os);
     return match target_os {
         OperatingSystem::Windows => {
             true
@@ -131,19 +130,19 @@ fn download(destination: &str, lib: &LibraryDownloads) -> String {
     let mut file_name: String = "lib.jar".to_string();
     if let Some(ref artifact) = lib.artifact {
         let url = &artifact.url;
-        io_utils::download(format!("{}/{}", destination, io_utils::get_resource_name(url).expect("lib1.jar")).as_str(), url);
+        io_utils::download(format!("{}/{}", destination, get_resource_name(url).expect("lib1.jar")).as_str(), url);
         file_name = get_resource_name(url).expect("e");
     } else if let Some(ref classifiers) = lib.classifiers {
         let (url, path) = if let Some(ref windows) = classifiers.windows {
             (&windows.url, &windows.path)
         } else if let Some(ref windows64) = classifiers.windows64 {
             (&windows64.url, &windows64.path)
-        } else if let Some(ref nwin) = classifiers.natives_windows {
-            (&nwin.url, &nwin.path)
+        } else if let Some(ref natives_win) = classifiers.natives_windows {
+            (&natives_win.url, &natives_win.path)
         } else {
             return "e".to_string();
         };
-        let mut dest_file = format!("{}/{}", destination, io_utils::get_resource_name(url).expect("lib.jar"));
+        let mut dest_file = format!("{}/{}", destination, get_resource_name(url).expect("lib.jar"));
         io_utils::download(dest_file.as_str(), url);
         file_name = get_resource_name(url).expect("a");
     }

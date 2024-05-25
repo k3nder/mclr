@@ -17,14 +17,16 @@ pub fn save_indexes_load(file_str: &str, json: &JsonVersion) -> Assets {
     return serde_json::from_str(&content.as_str()).unwrap();
 }
 
-
 pub fn download_all(destination: &str, json_version: &JsonVersion, event: HandleEvent<CounterEvent>) {
+    download_all_url(destination, json_version, event, BASE_URL)
+}
+pub fn download_all_url(destination: &str, json_version: &JsonVersion, event: HandleEvent<CounterEvent>, url: &str) {
     let assets = &mc::utils::assets_utils::save_indexes_load(format!("{}\\indexes\\{}.json", destination, json_version.assets.as_str()).as_str(), json_version);
     let mut index = 0;
     for (key, value) in &assets.objects {
         let hash = &value.hash;
         let block = &hash[..2];
-        let url = format!("{}/{}/{}", BASE_URL, block, hash);
+        let url = format!("{}/{}/{}", url, block, hash);
         //println!("{}", url);
         let key_path = key.as_str();
         if !std::path::Path::new(format!("{}/virtual/legacy/", destination).as_str()).exists() {
@@ -43,7 +45,7 @@ pub fn download_all(destination: &str, json_version: &JsonVersion, event: Handle
             download(&path, &url);
         }
         index += 1;
-        (event.event)(CounterEvent::new(assets.objects.len(), index))
+        event.event(CounterEvent::new(assets.objects.len(), index))
         //println!("{}", block);
     }
 }
