@@ -46,7 +46,7 @@ impl Command {
             .arg(format!("-Dio.netty.native.workdir={}", self.resources.bin))
             .arg(format!("-Djava.library.path={}", self.resources.bin))
             .arg("-cp")
-            .arg(format!(".;{};{}\\*", self.resources.jar_file, self.resources.libraries))
+            .arg(format!("{};{}\\*", self.resources.jar_file, self.resources.libraries))
             .arg(self.version.main_class.as_str())
             .arg("--version")
             .arg(self.version.version_id.as_str())
@@ -68,6 +68,8 @@ impl Command {
             .arg(self.assets.assets_index.as_str())
             .arg("--assetsDir")
             .arg(self.assets.assets_dir.as_str())
+            .arg("--gameDir")
+            .arg(self.game_dir.as_str())
             .stdout(Stdio::piped())
             .spawn().unwrap();
         // Obtener el stdout del proceso hijo
