@@ -2,7 +2,7 @@ use std::fs::File;
 use std::io::Write;
 use serde::Deserialize;
 use crate::deserialize::json_version;
-use crate::utils::io_utils::{get, get_string};
+use crate::utils::io_utils::{get_string};
 use crate::utils::sync_utils::sync;
 
 #[derive(Deserialize, Debug)]

@@ -1,14 +1,14 @@
-use std::any::Any;
+
 use std::cmp::PartialEq;
-use std::fmt::format;
-use std::fs;
-use std::io::Read;
-use std::path::{Path, PathBuf};
-use std::process::Command;
-use std::ptr::null;
-use tokio::io::join;
-use crate::deserialize::json_version::{Library, LibraryDownloads, LibraryDownloadsArtifacts, LibraryDownloadsClassifiers, LibraryRule, LibraryRuleOs};
-use crate::mc;
+
+
+
+
+
+
+
+use crate::deserialize::json_version::{Library, LibraryDownloads, LibraryRule};
+
 use crate::utils::{CounterEvent, HandleEvent, io_utils};
 use crate::utils::io_utils::get_resource_name;
 use crate::utils::io_utils::system::OperatingSystem;
@@ -42,7 +42,7 @@ pub fn get_libs(destination: &str, binary_destination: &str, libs: &Vec<Library>
 
 
 fn is_allowed_library(lib: &Library) -> bool {
-    let clone = lib.clone();
+    let clone = lib;
     let cd = &clone.downloads;
     if cd.is_none() {
         return true;
@@ -91,16 +91,16 @@ fn find_out_classifiers(downloads: &LibraryDownloads) -> bool {
     }
     let classifiers = downloads.classifiers.as_ref().unwrap();
     let mut result = false;
-    if let Some(ref windows) = classifiers.windows {
+    if let Some(ref _windows) = classifiers.windows {
         result = is_os(result);
     }
-    if let Some(ref windows64) = classifiers.windows64 {
+    if let Some(ref _windows64) = classifiers.windows64 {
         result = is_os(result);
     }
-    if let Some(ref windows32) = classifiers.windows32 {
+    if let Some(ref _windows32) = classifiers.windows32 {
         result = is_os(result);
     }
-    if let Some(ref natives_win) = classifiers.natives_windows {
+    if let Some(ref _natives_win) = classifiers.natives_windows {
         //println!("natives");
         result = true;
     }
@@ -133,7 +133,7 @@ fn download(destination: &str, lib: &LibraryDownloads) -> String {
         io_utils::download(format!("{}/{}", destination, get_resource_name(url).expect("lib1.jar")).as_str(), url);
         file_name = get_resource_name(url).expect("e");
     } else if let Some(ref classifiers) = lib.classifiers {
-        let (url, path) = if let Some(ref windows) = classifiers.windows {
+        let (url, _path) = if let Some(ref windows) = classifiers.windows {
             (&windows.url, &windows.path)
         } else if let Some(ref windows64) = classifiers.windows64 {
             (&windows64.url, &windows64.path)
@@ -142,7 +142,7 @@ fn download(destination: &str, lib: &LibraryDownloads) -> String {
         } else {
             return "e".to_string();
         };
-        let mut dest_file = format!("{}/{}", destination, get_resource_name(url).expect("lib.jar"));
+        let dest_file = format!("{}/{}", destination, get_resource_name(url).expect("lib.jar"));
         io_utils::download(dest_file.as_str(), url);
         file_name = get_resource_name(url).expect("a");
     }

@@ -1,7 +1,5 @@
-use reqwest::Error;
-use crate::deserialize::json_manifest;
 use crate::deserialize::json_manifest::Manifest;
-use crate::utils::io_utils::{get, get_string};
+use crate::utils::io_utils::{get_string};
 pub async fn manifest() -> Manifest {
     manifest_url("https://launchermeta.mojang.com/mc/game/version_manifest.json").await
 }

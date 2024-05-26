@@ -1,4 +1,3 @@
-use std::future::Future;
 use tokio::runtime::Runtime;
 
 pub fn sync() -> Runtime {

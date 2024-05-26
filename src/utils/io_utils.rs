@@ -1,12 +1,11 @@
 use std::fs;
 use std::fs::File;
-use std::io::{copy, Read, Write};
+use std::io::{copy, Read};
 use std::path::{Path, PathBuf};
 use std::time::Duration;
 use bytes::Bytes;
 use reqwest::{Client, Error};
-use serde::de::DeserializeOwned;
-use tokio::runtime::Runtime;
+
 use crate::utils::sync_utils::sync;
 
 pub async fn get(url: &String) -> Result<Bytes, Error> {
@@ -58,7 +57,7 @@ pub fn download(file_str: &str, url: &str) {
             let content = response.bytes().unwrap();
             copy(&mut content.as_ref(), &mut dest).unwrap();
         }
-        Err(e) => {
+        Err(_e) => {
             download(file_str, url);
         }
     }
@@ -72,8 +71,8 @@ fn get_parent_directory(path: &Path) -> Option<PathBuf> {
 pub mod compress {
     use std::fs::create_dir_all;
     use std::{fs, io};
-    use std::io::{BufReader, Read, Write};
-    use std::path::{Path, PathBuf};
+    use std::io::{BufReader, Read};
+    use std::path::{Path};
     use flate2::read::GzDecoder;
     use tar::Archive;
     use zip::{ZipArchive};
