@@ -35,10 +35,10 @@ pub fn verify_url(destination: &str, json_version: &JsonVersion, counter: Handle
         let object_path = format!("{}/objects/{}/{}", destination, block, hash);
         //println!("{}::::{}", path, object_path);
         index += 1;
-        println!("{}", key);
+        //println!("{}", key);
         counter.event(CounterEvent::new(assets.objects.len(), index));
         if !(verify_integrity(value.size, object_path.as_str()) && verify_integrity(value.size, path.as_str())) {
-            println!("e");
+            //println!("e");
             return false;
         }
         //println!("{}", block);
