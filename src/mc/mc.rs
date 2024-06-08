@@ -1,7 +1,10 @@
+use std::fmt::format;
+use std::path::Path;
 use crate::utils::io_utils;
 use crate::utils::io_utils::{compress};
 use io_utils::system::OperatingSystem;
 use crate::deserialize::json_version::{Client, JavaVersion, JsonVersion};
+use crate::utils::io_utils::compress::verify_integrity;
 
 pub struct JreUrls {
     pub windows: Box<JreUrl>,
@@ -36,9 +39,12 @@ pub fn get_compatible_java_urls(destination: &str, version: &JavaVersion, urls: 
         _ => urls.other.jre22.as_str(),
     };
 
-    compress::download(&jre8, format!("{destination}/8").as_str());
-    compress::download(&jre20, format!("{destination}/20").as_str());
-
+    if !Path::new(format!("{destination}/8").as_str()).exists() {
+        compress::download(&jre8, format!("{destination}/8").as_str());
+    }
+    if !Path::new(format!("{destination}/20").as_str()).exists() {
+        compress::download(&jre20, format!("{destination}/20").as_str());
+    }
     // calculate compatible java
     let java_version = version.majorVersion;
     return if java_version <= 8 {
@@ -51,5 +57,7 @@ pub fn download(destination: &str,json_version: &JsonVersion) {
     download_jar(&json_version.downloads.client, destination);
 }
 fn download_jar(client: &Client, file_str: &str){
-    io_utils::download(file_str, client.url.as_str());
+    if !verify_integrity(client.size, file_str) {
+        io_utils::download(file_str, client.url.as_str());
+    }
 }

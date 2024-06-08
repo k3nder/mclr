@@ -40,7 +40,19 @@ pub fn get_libs(destination: &str, binary_destination: &str, libs: &Vec<Library>
     Ok(())
 }
 
-
+fn verify(destination: &str, libs: Vec<Library>) -> bool {
+    for x in libs {
+        let downloads = match &x.downloads {
+            Some(d) => (false, d),  // Si hay descargas, no es None
+            None => (true, &LibraryDownloads { artifact: None, classifiers: None }),  // Usa un valor por defecto si no hay descargas
+        };
+        if is_allowed_library(&x) {
+            //println!("downloading... {}", &lib.name);
+            return true;
+        }
+    }
+    return false;
+}
 fn is_allowed_library(lib: &Library) -> bool {
     let clone = lib;
     let cd = &clone.downloads;

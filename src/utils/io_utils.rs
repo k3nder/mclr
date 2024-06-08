@@ -69,11 +69,12 @@ fn get_parent_directory(path: &Path) -> Option<PathBuf> {
 }
 
 pub mod compress {
-    use std::fs::create_dir_all;
+    use std::fs::{create_dir_all, File, metadata};
     use std::{fs, io};
     use std::io::{BufReader, Read};
     use std::path::{Path};
     use flate2::read::GzDecoder;
+    use sha1::{Digest, Sha1};
     use tar::Archive;
     use zip::{ZipArchive};
     use crate::utils::io_utils;
@@ -156,6 +157,31 @@ pub mod compress {
         io_utils::download(FILE, url);
         extract(destination, FILE);
         fs::remove_file(FILE).expect("Cannot remove temp file jre");
+    }
+    pub fn verify_integrity(len: u64, file: &str) -> bool {
+        if Path::new(file).exists() {
+            return metadata(file).unwrap().len() == len;
+            //if compute_sha1(file).unwrap().eq(sha1) {
+            //    return true;
+            //}
+        }
+        return false;
+    }
+    fn compute_sha1<P: AsRef<Path>>(file_path: P) -> io::Result<String> {
+        let mut file = File::open(file_path).unwrap();
+        let mut hasher = Sha1::new();
+        let mut buffer = [0; 4096];
+
+        loop {
+            let n = file.read(&mut buffer).unwrap();
+            if n == 0 {
+                break;
+            }
+            hasher.update(&buffer[..n]);
+        }
+
+        let result = hasher.finalize();
+        Ok(format!("{:x}", result))
     }
 }
 

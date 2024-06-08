@@ -4,6 +4,7 @@ use std::path::Path;
 use crate::deserialize::assets::Assets;
 use crate::deserialize::json_version::JsonVersion;
 use crate::utils::{CounterEvent, HandleEvent, io_utils};
+use crate::utils::io_utils::compress::verify_integrity;
 use crate::utils::io_utils::download;
 
 const BASE_URL: &str = "https://resources.download.minecraft.net";
@@ -17,6 +18,32 @@ pub fn save_indexes_load(file_str: &str, json: &JsonVersion) -> Assets {
 
 pub fn download_all(destination: &str, json_version: &JsonVersion,on_download: HandleEvent<String> , event: HandleEvent<CounterEvent>) {
     download_all_url(destination, json_version, event, on_download, BASE_URL)
+}
+pub fn verify(destination: &str, json_version: &JsonVersion, counter: HandleEvent<CounterEvent>) -> bool {
+    verify_url(destination, json_version, counter, BASE_URL)
+}
+pub fn verify_url(destination: &str, json_version: &JsonVersion, counter: HandleEvent<CounterEvent>, url: &str) -> bool {
+    let assets = &save_indexes_load(format!("{}\\indexes\\{}.json", destination, json_version.assets.as_str()).as_str(), json_version);
+    let mut index = 0;
+    for (key, value) in &assets.objects {
+        let hash = &value.hash;
+        let block = &hash[..2];
+        let url = format!("{}/{}/{}", url, block, hash);
+        //println!("{}", url);
+        let key_path = key.as_str();
+        let path = format!("{}/virtual/legacy/{}", destination, key_path);
+        let object_path = format!("{}/objects/{}/{}", destination, block, hash);
+        //println!("{}::::{}", path, object_path);
+        index += 1;
+        println!("{}", key);
+        counter.event(CounterEvent::new(assets.objects.len(), index));
+        if !(verify_integrity(value.size, object_path.as_str()) && verify_integrity(value.size, path.as_str())) {
+            println!("e");
+            return false;
+        }
+        //println!("{}", block);
+    }
+    return true;
 }
 pub fn download_all_url(destination: &str, json_version: &JsonVersion, event: HandleEvent<CounterEvent>, on_download: HandleEvent<String>, url: &str) {
     let assets = &save_indexes_load(format!("{}\\indexes\\{}.json", destination, json_version.assets.as_str()).as_str(), json_version);
