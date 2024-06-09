@@ -29,19 +29,19 @@ pub fn verify_url(destination: &str, json_version: &JsonVersion, counter: Handle
         let hash = &value.hash;
         let block = &hash[..2];
         let _url = format!("{}/{}/{}", url, block, hash);
-        //println!("{}", url);
+        //////println!("{}", url);
         let key_path = key.as_str();
         let path = format!("{}/virtual/legacy/{}", destination, key_path);
         let object_path = format!("{}/objects/{}/{}", destination, block, hash);
-        //println!("{}::::{}", path, object_path);
+        ////println!("{}::::{}", path, object_path);
         index += 1;
-        //println!("{}", key);
+        ////println!("{}", key);
         counter.event(CounterEvent::new(assets.objects.len(), index));
         if !(verify_integrity(value.size, object_path.as_str()) && verify_integrity(value.size, path.as_str())) {
-            //println!("e");
+            ////println!("e");
             return false;
         }
-        //println!("{}", block);
+        ////println!("{}", block);
     }
     return true;
 }
@@ -52,7 +52,7 @@ pub fn download_all_url(destination: &str, json_version: &JsonVersion, event: Ha
         let hash = &value.hash;
         let block = &hash[..2];
         let url = format!("{}/{}/{}", url, block, hash);
-        //println!("{}", url);
+        ////println!("{}", url);
         let key_path = key.as_str();
         if !std::path::Path::new(format!("{}/virtual/legacy/", destination).as_str()).exists() {
             fs::create_dir_all(format!("{}/virtual/legacy/", destination)).unwrap();
@@ -62,7 +62,7 @@ pub fn download_all_url(destination: &str, json_version: &JsonVersion, event: Ha
         }
         let path = format!("{}/virtual/legacy/{}", destination, key_path);
         let object_path = format!("{}/objects/{}/{}", destination, block, hash);
-        //println!("{}::::{}", path, object_path);
+        ////println!("{}::::{}", path, object_path);
         if !Path::new(&object_path).exists() {
             download(&object_path, &url);
         }
@@ -72,6 +72,6 @@ pub fn download_all_url(destination: &str, json_version: &JsonVersion, event: Ha
         }
         index += 1;
         event.event(CounterEvent::new(assets.objects.len(), index))
-        //println!("{}", block);
+        ////println!("{}", block);
     }
 }

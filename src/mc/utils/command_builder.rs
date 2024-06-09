@@ -69,7 +69,7 @@ impl Command {
             .arg(self.game_dir.as_str())
             .stdout(Stdio::piped())
             .spawn().unwrap();
-        println!("run");
+        //println!("run");
         // Obtener el stdout del proceso hijo
         let stdout = child.stdout.take().expect("Failed to capture stdout");
 

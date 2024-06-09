@@ -38,19 +38,19 @@ mod tests {
 
             //while !mc::utils::libs_utils::verify(&*libs_path.clone(), json_version::load("versions/1.8.9/1.8.9.json").libraries) {
             mc::utils::libs_utils::get_libs(&libs_path.clone(), binary_path.as_str(), libs.clone(), HandleEvent::new(move |e| {
-                println!("{}", e.percent());
+                //println!("{}", e.percent());
             })).expect("TODO: panic message");
-            println!("{}", mc::utils::libs_utils::verify(&libs_path.clone(), libs.clone(), HandleEvent::new(move |e| {})));
+            //println!("{}", mc::utils::libs_utils::verify(&libs_path.clone(), libs.clone(), HandleEvent::new(move |e| {})));
 
 
             mc::mc::download(&jar_path, &version);
 
             mc::utils::assets_utils::download_all("assets", &version, HandleEvent::new(move |e| {
-                println!("{}", e);
+                //println!("{}", e);
             }), HandleEvent::new(|e| {
-                println!("{}", e.percent())
+                //println!("{}", e.percent())
             }));
-            println!("{}", &java_home.clone().as_str());
+            //println!("{}", &java_home.clone().as_str());
 
             mc::utils::command_builder::Command {
                 resources: CommandResourcesConfig {
@@ -78,7 +78,7 @@ mod tests {
                     xms: 2,
                 },
                 event: |s| {
-                    println!("{}", s);
+                    //println!("{}", s);
                 },
             }.run();
         }

@@ -1,6 +1,6 @@
 [package]
 name = "mclr"
-version = "2.0.0"
+version = "2.0.0-a"
 edition = "2021"
 authors = ["k3nder"]
 rust-version = "1.71.0"

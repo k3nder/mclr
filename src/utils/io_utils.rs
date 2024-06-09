@@ -82,7 +82,7 @@ pub mod compress {
 
     pub fn extract_zip(destination: &str, file_str: &str) {
         let filepath = Path::new(file_str);
-        //println!("{}", filepath.display());
+        ////println!("{}", filepath.display());
         let file = std::fs::File::open(&filepath).unwrap();
         let mut archive = ZipArchive::new(file).unwrap();
 

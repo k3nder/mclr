@@ -13,7 +13,7 @@ use crate::utils::io_utils::system::OperatingSystem;
 pub fn get_libs(destination: &str, binary_destination: &str, libs: &Vec<Library>, event: HandleEvent<CounterEvent>) -> Result<(), Box<dyn std::error::Error>> {
     let mut index = 0;
     for lib in libs {
-        println!("{}", &lib.clone().name.as_str());
+        //println!("{}", &lib.clone().name.as_str());
         let natives = &&lib.clone().natives;
         if let Some(downloads) = &lib.clone().downloads {
             // artifact
@@ -22,7 +22,7 @@ pub fn get_libs(destination: &str, binary_destination: &str, libs: &Vec<Library>
             classifier_download(destination, binary_destination, natives, &downloads);
         } else {
             // TODO custom download
-            println!("download custom")
+            //println!("download custom")
         }
         index += 1;
         event.event(CounterEvent::new(libs.len(), index));
@@ -38,7 +38,7 @@ fn classifier_download(destination: &str, binary_destination: &str, natives: &&O
             // TODO download
             download(format!("{}/{}", destination, get_resource_name(&n.clone().url).unwrap().as_str()).as_str(), &n.clone().url);
             extract_zip(binary_destination, format!("{}/{}", destination, get_resource_name(&n.clone().url).unwrap().as_str()).as_str());
-            println!("download key classfier")
+            //println!("download key classfier")
         }
     }
 }
@@ -48,12 +48,12 @@ fn artifact_download(destination: &str, lib: &&Library, downloads: &&LibraryDown
         if let Some(r) = &lib.clone().rules {
             if find_out_os(r) {
                 download(format!("{}/{}", destination, get_resource_name(&a.clone().url).unwrap().as_str()).as_str(), &a.clone().url);
-                println!("download rules artifact")
+                //println!("download rules artifact")
             }
         } else {
             // TODO download
             download(format!("{}/{}", destination, get_resource_name(&a.clone().url).unwrap().as_str()).as_str(), &a.clone().url);
-            println!("download artifact")
+            //println!("download artifact")
         }
     }
 }
@@ -66,7 +66,7 @@ fn artifact_verify(destination: &str, lib: &&Library, downloads: &&LibraryDownlo
                                                         destination,
                                                         get_resource_name(&a.clone().url).unwrap()
                 ).as_str());
-                //println!("download rules artifact")
+                ////println!("download rules artifact")
             }
             false
         } else {
@@ -75,7 +75,7 @@ fn artifact_verify(destination: &str, lib: &&Library, downloads: &&LibraryDownlo
                                              destination,
                                              get_resource_name(&a.clone().url).unwrap()
             ).as_str())
-            //println!("download artifact")
+            ////println!("download artifact")
         }
     } else {
         false
@@ -105,7 +105,7 @@ fn fill(s: &String, k: String, v: String) -> String {
 pub fn verify(destination: &str, libs: &Vec<Library>, event: HandleEvent<CounterEvent>) -> bool {
     let mut index = 0;
     for lib in libs {
-        println!("{}", &lib.clone().name.as_str());
+        //println!("{}", &lib.clone().name.as_str());
         let _natives = &&lib.clone().natives;
         if let Some(downloads) = &lib.clone().downloads {
             // artifact
@@ -114,7 +114,7 @@ pub fn verify(destination: &str, libs: &Vec<Library>, event: HandleEvent<Counter
             //classifier_download(destination, binary_destination, natives, &downloads);
         } else {
             // TODO custom download
-            println!("download custom")
+            //println!("download custom")
         }
         index += 1;
         event.event(CounterEvent::new(libs.len(), index));
@@ -133,7 +133,7 @@ pub fn verify(destination: &str, libs: &Vec<Library>, event: HandleEvent<Counter
 //    }
 //    if let Some(downloads) = &lib.downloads {
 //        allow_download.1 = find_out_classifiers(downloads);
-//        //println!("{}", allow_download);
+//        ////println!("{}", allow_download);
 //    }
 //    allow_download
 //}
@@ -182,7 +182,7 @@ fn find_out_os(rules: &[LibraryRule]) -> bool {
 //        result = is_os(result);
 //    }
 //    if let Some(ref _natives_win) = classifiers.natives_windows {
-//        println!("natives");
+//        //println!("natives");
 //        result = is_os(result);
 //    }
 //    result
@@ -212,9 +212,9 @@ fn is_os(def: bool) -> bool {
 //    if let Some(ref artifact) = lib.artifact {
 //        let url = &artifact.url;
 //        if q.0 {io_utils::download(format!("{}/{}", destination, get_resource_name(url).expect("lib1.jar")).as_str(), url);}
-//        println!("eee: {}", url.clone());
+//        //println!("eee: {}", url.clone());
 //        file_name = get_resource_name(url).expect("e");
-//        println!("{}", &file_name.clone());
+//        //println!("{}", &file_name.clone());
 //    }
 //    if let Some(ref classifiers) = lib.classifiers {
 //        let (url, _path) = if let Some(ref windows) = classifiers.windows {
@@ -224,7 +224,7 @@ fn is_os(def: bool) -> bool {
 //        } else if let Some(ref natives_win) = classifiers.natives_windows {
 //            (&natives_win.url, &natives_win.path)
 //        } else {
-//            println!("eeeee");
+//            //println!("eeeee");
 //            return "e".to_string();
 //        };
 //        let dest_file = format!("{}/{}", destination, get_resource_name(url).expect("lib.jar"));
