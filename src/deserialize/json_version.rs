@@ -1,3 +1,4 @@
+use std::collections::HashMap;
 use std::fs::File;
 use std::io::Read;
 use serde::{Deserialize};
@@ -56,28 +57,18 @@ pub fn default_vec_library_rules() -> Vec<LibraryRule> {
 #[derive(Debug, Deserialize)]
 pub struct LibraryDownloads {
     pub(crate) artifact: Option<LibraryDownloadsArtifacts>,
-    pub(crate) classifiers: Option<LibraryDownloadsClassifiers>,
+    pub(crate) classifiers: Option<HashMap<String ,LibraryDownloadsArtifacts>>,
 }
 
 #[derive(Debug, Deserialize)]
 pub struct LibraryDownloadsArtifacts {
     pub(crate) path: String,
     sha1: String,
-    size: u64,
+    pub size: u64,
     pub(crate) url: String,
 }
 
-#[derive(Debug, Deserialize)]
-pub struct LibraryDownloadsClassifiers {
-    linux: Option<LibraryDownloadsArtifacts>,
-    osx: Option<LibraryDownloadsArtifacts>,
-    pub(crate) windows: Option<LibraryDownloadsArtifacts>,
-    pub(crate) windows64: Option<LibraryDownloadsArtifacts>,
-    pub(crate) windows32: Option<LibraryDownloadsArtifacts>,
-    #[serde(rename = "natives-linux")] pub(crate) natives_linux: Option<LibraryDownloadsArtifacts>,
-    #[serde(rename = "natives-osx")] pub(crate) natives_osx: Option<LibraryDownloadsArtifacts>,
-    #[serde(rename = "natives-windows")] pub(crate) natives_windows: Option<LibraryDownloadsArtifacts>,
-}
+
 
 #[derive(Debug, Deserialize)]
 #[derive(Default)]
@@ -98,7 +89,7 @@ pub struct Library {
     pub(crate) name: String,
     pub(crate) rules: Option<Vec<LibraryRule>>,
     #[serde(default)] pub(crate) url: String,
-    #[serde(default)] natives: LibraryNatives,
+    pub natives: Option<LibraryNatives>,
     #[serde(default)] md5: String,
     #[serde(default)] sha1: String,
     #[serde(default)] sha256: String,
@@ -112,8 +103,8 @@ pub struct LibraryExtract {
 }
 #[derive(Deserialize, Debug, Default)]
 pub struct LibraryNatives {
-    pub osx: String,
-    pub linux: String,
+    pub osx: Option<String>,
+    pub linux: Option<String>,
     pub windows: String
 }
 #[derive(Deserialize, Default, Debug)]

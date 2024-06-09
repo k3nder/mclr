@@ -24,4 +24,11 @@ impl JsonVersion {
         self.save(file);
         json_version::load(file)
     }
+    //pub fn quilt_loader(v: &str) -> str {
+    //    //return sync().block_on(get_string(format!("https://meta.quiltmc.org/v3/versions/loader/{}", v).as_str()))
+    //}
+
+    //pub fn quilt(vanilla: &str, loader: &str) -> JsonVersion {
+//
+    //}
 }

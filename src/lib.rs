@@ -7,45 +7,83 @@
 pub mod deserialize;
 pub mod mc;
 pub mod utils;
-#[cfg(test)]
 mod tests {
     use std::fs;
     use std::path::Path;
+    use crate::deserialize::json_version;
+    use crate::deserialize::json_version::JsonVersion;
     use crate::mc::mc::get_compatible_java;
+    use crate::mc::utils::command_builder::{CommandAssetsConfig, CommandRamConfig, CommandResourcesConfig, CommandUserConfig};
     use crate::utils::HandleEvent;
     use crate::utils::manifest::manifest;
     use crate::utils::sync_utils::sync;
     use super::*;
+
     #[test]
     fn main() {
         let version_index = Some(0);
         if !Path::new("versions").exists() { fs::create_dir("versions").expect("Cannot create versions") }
         if let Some(version_index) = version_index {
             //CONSOLE_HISTORY.push("downloading...".to_string());
-            let versions = sync().block_on(manifest()).versions;
-            let version_id = &versions.get(version_index).unwrap().id;
-            if !Path::new(format!("versions/{version_id}").as_str()).exists() { fs::create_dir(format!("versions/{version_id}")).expect("Cannot create versions dir") }
-            let version = &versions.get(version_index).unwrap().save_and_load(format!("versions/{}/{}.json", &version_id, &version_id).as_str());
+            let b = sync().block_on(manifest());
+            let versions = b.get("1.0").unwrap();
+
+
+            if !Path::new(format!("versions/{}", versions.clone().id).as_str()).exists() { fs::create_dir(format!("versions/{}", &versions.clone().id)).expect("Cannot create versions dir") }
+            let version = &versions.save_and_load(format!("versions/{}/{}.json", &versions.clone().id, &versions.clone().id).as_str());
             let java_home = get_compatible_java("dest", &version.javaVersion);
             // paths and parameters
             let jar_path = format!("versions/{}/{}.jar", &version.id, &version.id);
             let libs_path = format!("versions/{}/libraries", &version.id);
             let binary_path = format!("versions/{}/bin", &version.id);
+            let libs = &version.clone().libraries;
+
+            //while !mc::utils::libs_utils::verify(&*libs_path.clone(), json_version::load("versions/1.8.9/1.8.9.json").libraries) {
+            mc::utils::libs_utils::get_libs(&libs_path.clone(), binary_path.as_str(), libs.clone(), HandleEvent::new(move |e| {
+                println!("{}", e.percent());
+            })).expect("TODO: panic message");
+            println!("{}", mc::utils::libs_utils::verify(&libs_path.clone(), libs.clone(), HandleEvent::new(move |e| {})));
 
 
             mc::mc::download(&jar_path, &version);
-            if !mc::utils::assets_utils::verify("assets", &version, HandleEvent::new(move |e| {
-                println!("{}", e.percent());
-            })) {
-                mc::utils::assets_utils::download_all("assets", &version, HandleEvent::new(move |e| {
-                    println!("{}", e);
-                }), HandleEvent::new(|e| {
-                    println!("{}", e.percent())
-                }));
-            }
-        } else {
-            //CONSOLE_HISTORY.push("nothing selected".to_string());
+
+            mc::utils::assets_utils::download_all("assets", &version, HandleEvent::new(move |e| {
+                println!("{}", e);
+            }), HandleEvent::new(|e| {
+                println!("{}", e.percent())
+            }));
+            println!("{}", &java_home.clone().as_str());
+
+            mc::utils::command_builder::Command {
+                resources: CommandResourcesConfig {
+                    libraries: libs_path.clone().to_string(),
+                    jar_file: jar_path.to_string(),
+                    bin: binary_path.to_string(),
+                },
+                java_home: java_home.to_string(),
+                game_dir: "C:\\Users\\krist\\RustroverProjects\\mclrr".to_string(),
+                assets: CommandAssetsConfig {
+                    assets_dir: "assets\\".to_string(),
+                    assets_index: version.assets.to_string(),
+                },
+                user: CommandUserConfig {
+                    user_type: "user".to_string(),
+                    client_id: "0".to_string(),
+                    uuid: "d0db8a3d-c392-4ae7-96e5-9365de33ab52".to_string(),
+                    xuid: "0".to_string(),
+                    access_token: "0".to_string(),
+                    user_name: "tuser".to_string(),
+                },
+                version: version.command_conf(),
+                ram: CommandRamConfig {
+                    xmx: 4,
+                    xms: 2,
+                },
+                event: |s| {
+                    println!("{}", s);
+                },
+            }.run();
         }
-        assert_eq!(true, true)
+        //assert_eq!(true, true)
     }
 }
