@@ -105,7 +105,7 @@ pub struct LibraryExtract {
 pub struct LibraryNatives {
     pub osx: Option<String>,
     pub linux: Option<String>,
-    pub windows: String
+    pub windows: Option<String>
 }
 #[derive(Deserialize, Default, Debug)]
 #[serde(default)]

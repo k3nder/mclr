@@ -87,8 +87,11 @@ fn get_natives_value(n: &Option<LibraryNatives>) -> String {
         let os = OperatingSystem::detect();
         match os {
             OperatingSystem::Windows => {
-                let raw = &n.clone().windows;
-                fill(raw, "arch".to_string(), "x64".to_string()).to_string()
+                return if let Some(raw) = &n.clone().windows {
+                    fill(raw, "arch".to_string(), "x64".to_string()).to_string()
+                } else {
+                    "".to_string()
+                }
             }
             _ => { "".to_string() }
         }
