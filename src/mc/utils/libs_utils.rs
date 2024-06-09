@@ -1,6 +1,6 @@
 
 use std::cmp::PartialEq;
-use std::fmt::format;
+
 
 
 use crate::deserialize::json_version::{Library, LibraryDownloads, LibraryNatives, LibraryRule};
@@ -106,7 +106,7 @@ pub fn verify(destination: &str, libs: &Vec<Library>, event: HandleEvent<Counter
     let mut index = 0;
     for lib in libs {
         println!("{}", &lib.clone().name.as_str());
-        let natives = &&lib.clone().natives;
+        let _natives = &&lib.clone().natives;
         if let Some(downloads) = &lib.clone().downloads {
             // artifact
             if !artifact_verify(destination, &lib, &downloads) { return false; }

@@ -28,7 +28,7 @@ pub fn verify_url(destination: &str, json_version: &JsonVersion, counter: Handle
     for (key, value) in &assets.objects {
         let hash = &value.hash;
         let block = &hash[..2];
-        let url = format!("{}/{}/{}", url, block, hash);
+        let _url = format!("{}/{}/{}", url, block, hash);
         //println!("{}", url);
         let key_path = key.as_str();
         let path = format!("{}/virtual/legacy/{}", destination, key_path);

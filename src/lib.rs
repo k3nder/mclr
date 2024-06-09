@@ -10,14 +10,12 @@ pub mod utils;
 mod tests {
     use std::fs;
     use std::path::Path;
-    use crate::deserialize::json_version;
-    use crate::deserialize::json_version::JsonVersion;
+    use crate::mc;
     use crate::mc::mc::get_compatible_java;
     use crate::mc::utils::command_builder::{CommandAssetsConfig, CommandRamConfig, CommandResourcesConfig, CommandUserConfig};
     use crate::utils::HandleEvent;
     use crate::utils::manifest::manifest;
     use crate::utils::sync_utils::sync;
-    use super::*;
 
     #[test]
     fn main() {
