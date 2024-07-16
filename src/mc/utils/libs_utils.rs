@@ -62,7 +62,7 @@ fn artifact_verify(destination: &str, lib: &&Library, downloads: &&LibraryDownlo
         if let Some(r) = &lib.clone().rules {
             if find_out_os(r) {
                 //download(format!("{}/{}", destination, get_resource_name(&a.clone().url).unwrap().as_str()).as_str(), &a.clone().url);
-                return verify_integrity(a.size, format!("{}\\{}",
+                return verify_integrity(a.size, format!("{}/{}",
                                                         destination,
                                                         get_resource_name(&a.clone().url).unwrap()
                 ).as_str());
@@ -71,7 +71,7 @@ fn artifact_verify(destination: &str, lib: &&Library, downloads: &&LibraryDownlo
             false
         } else {
             // TODO download
-            verify_integrity(a.size, format!("{}\\{}",
+            verify_integrity(a.size, format!("{}/{}",
                                              destination,
                                              get_resource_name(&a.clone().url).unwrap()
             ).as_str())

@@ -48,9 +48,9 @@ pub fn get_compatible_java_urls(destination: &str, version: &JavaVersion, urls: 
     // calculate compatible java
     let java_version = version.majorVersion;
     return if java_version <= 8 {
-        format!("{}\\8\\jdk8u382-b05-jre\\bin\\java", destination).to_string()
+        format!("{}/8/jdk8u382-b05-jre/bin/java", destination).to_string()
     } else {
-        format!("{}\\20\\jdk-21.0.3+9-jre\\bin\\java", destination).to_string()
+        format!("{}/20/jdk-21.0.3+9-jre/bin/java", destination).to_string()
     }
 }
 pub fn download(destination: &str,json_version: &JsonVersion) {

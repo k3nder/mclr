@@ -38,6 +38,8 @@ pub struct CommandUserConfig {
 }
 impl Command {
     pub fn run(&self) {
+        println!("{}", self.java_home.clone());
+
         let mut child = std::process::Command::new(self.java_home.as_str())
             .arg(format!("-Djna.tmpdir={}", self.resources.bin))
             .arg(format!("-Dio.netty.native.workdir={}", self.resources.bin))

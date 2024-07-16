@@ -25,7 +25,7 @@ mod tests {
         if let Some(version_index) = version_index {
             //CONSOLE_HISTORY.push("downloading...".to_string());
             let b = sync().block_on(manifest());
-            let versions = b.get("1.18.2").unwrap();
+            let versions = b.get("1.21").unwrap();
 
 
             if !Path::new(format!("versions/{}", versions.clone().id).as_str()).exists() { fs::create_dir(format!("versions/{}", &versions.clone().id)).expect("Cannot create versions dir") }
@@ -46,11 +46,11 @@ mod tests {
 
             mc::mc::download(&jar_path, &version);
 
-            mc::utils::assets_utils::download_all("assets", &version, HandleEvent::new(move |e| {
-                //println!("{}", e);
-            }), HandleEvent::new(|e| {
-                //println!("{}", e.percent())
-            }));
+            //mc::utils::assets_utils::download_all("assets", &version, HandleEvent::new(move |e| {
+            //    //println!("{}", e);
+            //}), HandleEvent::new(|e| {
+            //    //println!("{}", e.percent())
+            //}));
             //println!("{}", &java_home.clone().as_str());
 
             mc::utils::command_builder::Command {
@@ -60,9 +60,9 @@ mod tests {
                     bin: binary_path.to_string(),
                 },
                 java_home: java_home.to_string(),
-                game_dir: "C:\\Users\\krist\\RustroverProjects\\mclrr".to_string(),
+                game_dir: ".min".to_string(),
                 assets: CommandAssetsConfig {
-                    assets_dir: "assets\\".to_string(),
+                    assets_dir: "assets/".to_string(),
                     assets_index: version.assets.to_string(),
                 },
                 user: CommandUserConfig {
@@ -79,7 +79,7 @@ mod tests {
                     xms: 2,
                 },
                 event: |_s: String| {
-                    //println!("{}", s);
+                    println!("{}", _s);
                 },
             }.run();
         }

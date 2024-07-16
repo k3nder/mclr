@@ -23,7 +23,7 @@ pub fn verify(destination: &str, json_version: &JsonVersion, counter: HandleEven
     verify_url(destination, json_version, counter, BASE_URL)
 }
 pub fn verify_url(destination: &str, json_version: &JsonVersion, counter: HandleEvent<CounterEvent>, url: &str) -> bool {
-    let assets = &save_indexes_load(format!("{}\\indexes\\{}.json", destination, json_version.assets.as_str()).as_str(), json_version);
+    let assets = &save_indexes_load(format!("{}/indexes/{}.json", destination, json_version.assets.as_str()).as_str(), json_version);
     let mut index = 0;
     for (key, value) in &assets.objects {
         let hash = &value.hash;
@@ -46,7 +46,7 @@ pub fn verify_url(destination: &str, json_version: &JsonVersion, counter: Handle
     return true;
 }
 pub fn download_all_url(destination: &str, json_version: &JsonVersion, event: HandleEvent<CounterEvent>, on_download: HandleEvent<String>, url: &str) {
-    let assets = &save_indexes_load(format!("{}\\indexes\\{}.json", destination, json_version.assets.as_str()).as_str(), json_version);
+    let assets = &save_indexes_load(format!("{}/indexes/{}.json", destination, json_version.assets.as_str()).as_str(), json_version);
     let mut index = 0;
     for (key, value) in &assets.objects {
         let hash = &value.hash;
