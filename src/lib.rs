@@ -25,7 +25,7 @@ mod tests {
         if let Some(version_index) = version_index {
             //CONSOLE_HISTORY.push("downloading...".to_string());
             let b = sync().block_on(manifest());
-            let versions = b.get("1.18.2 ").unwrap();
+            let versions = b.get("1.18.2").unwrap();
 
 
             if !Path::new(format!("versions/{}", versions.clone().id).as_str()).exists() { fs::create_dir(format!("versions/{}", &versions.clone().id)).expect("Cannot create versions dir") }

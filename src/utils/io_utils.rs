@@ -79,6 +79,7 @@ pub mod compress {
     use zip::{ZipArchive};
     use crate::utils::io_utils;
     use crate::utils::io_utils::get_resource_name;
+    use crate::utils::io_utils::system::OperatingSystem;
 
     pub fn extract_zip(destination: &str, file_str: &str) {
         let filepath = Path::new(file_str);
@@ -155,7 +156,15 @@ pub mod compress {
         let binding = get_resource_name(url).unwrap();
         let FILE: &str = binding.as_str();
         io_utils::download(FILE, url);
-        extract(destination, FILE);
+        match OperatingSystem::detect() {
+            OperatingSystem::Windows => {
+                extract_zip(destination, FILE);
+            }
+            _ => {
+                extract_tar(destination, FILE);
+            }
+        };
+
         fs::remove_file(FILE).expect("Cannot remove temp file jre");
     }
     pub fn verify_integrity(len: u64, file: &str) -> bool {
