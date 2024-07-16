@@ -52,6 +52,7 @@ mod tests {
             //    //println!("{}", e.percent())
             //}));
             //println!("{}", &java_home.clone().as_str());
+            println!("{}", jar_path.as_str().clone());
 
             mc::utils::command_builder::Command {
                 resources: CommandResourcesConfig {
