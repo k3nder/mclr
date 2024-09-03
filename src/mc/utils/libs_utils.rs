@@ -1,14 +1,43 @@
 
 use std::cmp::PartialEq;
-
-
-
+use std::path::Path;
 use crate::deserialize::json_version::{Library, LibraryDownloads, LibraryNatives, LibraryRule};
 
 use crate::utils::{CounterEvent, HandleEvent, io_utils};
 use crate::utils::io_utils::{download, get_resource_name};
-use crate::utils::io_utils::compress::{extract_zip, verify_integrity};
+use crate::utils::io_utils::compress::extract_zip;
 use crate::utils::io_utils::system::OperatingSystem;
+
+
+struct MavenLibrary {
+    pub groupID: String,
+    pub artifactID: String,
+    pub version: String,
+    pub repository: String
+}
+
+impl MavenLibrary {
+    pub fn parse(name: String, repository: String) -> Self {
+
+        let tokens: Vec<&str> = name.split(":").collect();
+
+        MavenLibrary {
+            repository,
+            groupID: tokens.get(0).unwrap().to_string(),
+            artifactID: tokens.get(1).unwrap().to_string(),
+            version: tokens.get(2).unwrap().to_string()
+        }
+    }
+
+    pub fn all_URL(&self) -> String {
+        let group = self.groupID.replace(".", "/");
+        format!("{}{}/{}/{}/{}", self.repository, group, self.artifactID, self.version, self.cl_name())
+    }
+
+    pub fn cl_name(&self) -> String {
+        format!("{}-{}.jar", self.artifactID, self.version)
+    }
+}
 
 pub fn get_libs(destination: &str, binary_destination: &str, libs: &Vec<Library>, event: HandleEvent<CounterEvent>) -> Result<(), Box<dyn std::error::Error>> {
     let mut index = 0;
@@ -21,8 +50,9 @@ pub fn get_libs(destination: &str, binary_destination: &str, libs: &Vec<Library>
             // classfiers
             classifier_download(destination, binary_destination, natives, &downloads);
         } else {
-            // TODO custom download
-            //println!("download custom")
+            let lib = MavenLibrary::parse(lib.clone().name, lib.clone().url);
+            println!("clib {}", lib.all_URL());
+            io_utils::download(format!("{}/{}", destination, lib.cl_name().as_str()).as_str(), lib.all_URL().as_str());
         }
         index += 1;
         event.event(CounterEvent::new(libs.len(), index));
@@ -32,62 +62,91 @@ pub fn get_libs(destination: &str, binary_destination: &str, libs: &Vec<Library>
 }
 
 fn classifier_download(destination: &str, binary_destination: &str, natives: &&Option<LibraryNatives>, downloads: &&LibraryDownloads) {
-    if let Some(c) = &downloads.clone().classifiers {
+    let clc = &downloads.clone().classifiers;
+    if !clc.is_none() {
         let native_key = get_natives_value(natives.clone());
-        if let Some(n) = c.get(native_key.clone().as_str()) {
+        if let Some(n) = &clc.clone().unwrap().get(&native_key) {
+
+            let file = format!("{}/{}", destination, get_resource_name(&n.clone().url).unwrap().as_str());
+
             // TODO download
-            download(format!("{}/{}", destination, get_resource_name(&n.clone().url).unwrap().as_str()).as_str(), &n.clone().url);
-            extract_zip(binary_destination, format!("{}/{}", destination, get_resource_name(&n.clone().url).unwrap().as_str()).as_str());
-            //println!("download key classfier")
+            download(&file, &n.clone().url);
+
+            //let _path = Path::new(&file);
+            //let _calc_sha1 = io_utils::calc_sha1(_path);
+            //if ( !verify_size(_path, n.size) || !(_calc_sha1.eq(&n.sha1) )) {
+            //    classifier_download(destination, binary_destination, natives, downloads);
+            //    return;
+            //}
+
+            extract_zip(binary_destination, file.as_str());
+            println!("download key classfier")
         }
     }
 }
 
 fn artifact_download(destination: &str, lib: &&Library, downloads: &&LibraryDownloads) {
     if let Some(a) = &downloads.clone().artifact {
+        let file = format!("{}/{}", destination, get_resource_name(&a.clone().url).unwrap().as_str());
         if let Some(r) = &lib.clone().rules {
             if find_out_os(r) {
-                download(format!("{}/{}", destination, get_resource_name(&a.clone().url).unwrap().as_str()).as_str(), &a.clone().url);
+                download(&file, &a.clone().url);
+
+                //let _path = Path::new(&file);
+                //let _calc_sha1 = io_utils::calc_sha1(_path);
+                //if ( !verify_size(_path, a.size) || !(_calc_sha1.eq(&a.sha1) )) {
+                //    artifact_download(destination, lib, downloads);
+                //    return;
+                //}
+
                 //println!("download rules artifact")
             }
         } else {
             // TODO download
             download(format!("{}/{}", destination, get_resource_name(&a.clone().url).unwrap().as_str()).as_str(), &a.clone().url);
+            //let _path = Path::new(&file);
+            //let _calc_sha1 = io_utils::calc_sha1(_path);
+            //if ( !verify_size(_path, a.size) || !(_calc_sha1.eq(&a.sha1) )) {
+            //    artifact_download(destination, lib, downloads);
+            //    return;
+            //}
             //println!("download artifact")
         }
     }
 }
 fn artifact_verify(destination: &str, lib: &&Library, downloads: &&LibraryDownloads) -> bool {
-    return if let Some(a) = &downloads.clone().artifact {
+    if let Some(a) = &downloads.clone().artifact {
+        let file = format!("{}/{}",
+                           destination,
+                           get_resource_name(&a.clone().url).unwrap());
         if let Some(r) = &lib.clone().rules {
             if find_out_os(r) {
-                //download(format!("{}/{}", destination, get_resource_name(&a.clone().url).unwrap().as_str()).as_str(), &a.clone().url);
-                return verify_integrity(a.size, format!("{}/{}",
-                                                        destination,
-                                                        get_resource_name(&a.clone().url).unwrap()
-                ).as_str());
-                ////println!("download rules artifact")
+                let _path = Path::new(file.as_str());
+                let _calc_sha1 = io_utils::calc_sha1(_path);
+                return !io_utils::verify_size(_path, a.size) || !(_calc_sha1.eq(&a.sha1))
             }
-            false
         } else {
-            // TODO download
-            verify_integrity(a.size, format!("{}/{}",
-                                             destination,
-                                             get_resource_name(&a.clone().url).unwrap()
-            ).as_str())
-            ////println!("download artifact")
+            let _path = Path::new(file.as_str());
+            let _calc_sha1 = io_utils::calc_sha1(_path);
+            return !io_utils::verify_size(_path, a.size) || !(_calc_sha1.eq(&a.sha1))
         }
-    } else {
-        false
     }
+    false
 }
 
 fn get_natives_value(n: &Option<LibraryNatives>) -> String {
-    return if let Some(n) = n {
+    if let Some(n) = n {
         let os = OperatingSystem::detect();
         match os {
             OperatingSystem::Windows => {
-                return if let Some(raw) = &n.clone().windows {
+                if let Some(raw) = &n.clone().windows {
+                    fill(raw, "arch".to_string(), "x64".to_string()).to_string()
+                } else {
+                    "".to_string()
+                }
+            },
+            OperatingSystem::Linux => {
+                if let Some(raw) = &n.clone().linux {
                     fill(raw, "arch".to_string(), "x64".to_string()).to_string()
                 } else {
                     "".to_string()
@@ -141,32 +200,13 @@ pub fn verify(destination: &str, libs: &Vec<Library>, event: HandleEvent<Counter
 //    allow_download
 //}
 
-fn get_customs_libs(library: &Library, destination: &str) -> Result<(), Box<dyn std::error::Error>> {
-    let index_of_p = library.name.rfind(':').unwrap();
-    let subversion = &library.name[(index_of_p + 1)..];
-    let etc = &library.name[..index_of_p];
-    let index_of = library.name.find(':').unwrap();
-    let nana = &library.name[(index_of + 1)..index_of_p];
-
-    let url = format!("{}{}{}{}{}{}{}{}{}", library.url, etc.replace(":", "/").replace(".", "/"), "/", subversion, "/", nana, "-", subversion, ".jar");
-    let file_name = format!("{}{}", nana, ".jar");
-
-    io_utils::download(format!("{}/{}", destination, file_name).as_str(), &*url);
-
-    Ok(())
-}
 
 fn find_out_os(rules: &[LibraryRule]) -> bool {
+    let sys = OperatingSystem::detect();
     for rule in rules {
-        if rule.action.eq("allow") {
-            if rule.os.name.is_empty() || cfg!(target_os = "windows") == (rule.os.name == "windows") {
-                return true;
-            }
-        } else if !rule.os.name.is_empty() && cfg!(target_os = "windows") != (rule.os.name == "windows") {
-            return true;
-        }
+        if !rule.allow(&sys) { return false }
     }
-    false
+    true
 }
 
 //fn find_out_classifiers(downloads: &LibraryDownloads) -> bool {
@@ -191,24 +231,6 @@ fn find_out_os(rules: &[LibraryRule]) -> bool {
 //    result
 //}
 //
-
-fn is_os(def: bool) -> bool {
-    let target_os = OperatingSystem::detect();
-    return match target_os {
-        OperatingSystem::Windows => {
-            true
-        }
-        OperatingSystem::Linux => {
-            true
-        }
-        OperatingSystem::MacOS => {
-            true
-        }
-        OperatingSystem::Other => {
-            def
-        }
-    };
-}
 
 //fn download(destination: &str, lib: &LibraryDownloads, q: (bool, bool)) -> String {
 //    let mut file_name: String = "lib.jar".to_string();

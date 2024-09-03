@@ -13,7 +13,8 @@ pub struct Command {
 pub struct CommandResourcesConfig {
     pub libraries: String,
     pub jar_file: String,
-    pub bin: String
+    pub bin: String,
+    pub logger: String
 }
 pub struct CommandRamConfig {
     pub xmx: i32,
@@ -40,10 +41,18 @@ impl Command {
     pub fn run(&self) {
         println!("{}", self.java_home.clone());
 
+        let chmod = std::process::Command::new("/bin/chmod")
+            .arg("+x")
+            .arg(self.java_home.clone().as_str())
+            .spawn();
+
+        chmod.unwrap().wait().unwrap();
+
         let mut child = std::process::Command::new(self.java_home.as_str())
             .arg(format!("-Djna.tmpdir={}", self.resources.bin))
             .arg(format!("-Dio.netty.native.workdir={}", self.resources.bin))
             .arg(format!("-Djava.library.path={}", self.resources.bin))
+            .arg(format!("-Dlog4j.configurationFile={}", self.resources.logger))
             .arg("-cp")
             .arg(format!("{}:{}/*", self.resources.jar_file, self.resources.libraries))
             .arg(self.version.main_class.as_str())

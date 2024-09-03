@@ -4,14 +4,13 @@ use std::path::Path;
 use crate::deserialize::assets::Assets;
 use crate::deserialize::json_version::JsonVersion;
 use crate::utils::{CounterEvent, HandleEvent, io_utils};
-use crate::utils::io_utils::compress::verify_integrity;
 use crate::utils::io_utils::download;
 
 const BASE_URL: &str = "https://resources.download.minecraft.net";
 
 pub fn save_indexes_load(file_str: &str, json: &JsonVersion) -> Assets {
     let indexes = &json.assetIndex;
-    io_utils::download(file_str, &indexes.url);
+    io_utils::download(file_str, &indexes.clone().url);
     let content = std::fs::read_to_string(file_str).unwrap();
     return serde_json::from_str(&content.as_str()).unwrap();
 }
@@ -23,7 +22,7 @@ pub fn verify(destination: &str, json_version: &JsonVersion, counter: HandleEven
     verify_url(destination, json_version, counter, BASE_URL)
 }
 pub fn verify_url(destination: &str, json_version: &JsonVersion, counter: HandleEvent<CounterEvent>, url: &str) -> bool {
-    let assets = &save_indexes_load(format!("{}/indexes/{}.json", destination, json_version.assets.as_str()).as_str(), json_version);
+    let assets = &save_indexes_load(format!("{}/indexes/{}.json", destination, json_version.assets.clone().as_str()).as_str(), json_version);
     let mut index = 0;
     for (key, value) in &assets.objects {
         let hash = &value.hash;
@@ -37,16 +36,18 @@ pub fn verify_url(destination: &str, json_version: &JsonVersion, counter: Handle
         index += 1;
         ////println!("{}", key);
         counter.event(CounterEvent::new(assets.objects.len(), index));
-        if !(verify_integrity(value.size, object_path.as_str()) && verify_integrity(value.size, path.as_str())) {
-            ////println!("e");
-            return false;
-        }
+
+
+        //if ( verify_size(obj_p, value.size) || verify_size(value_p, value.size)) {
+        //    ////println!("e");
+        //    return false;
+        //}
         ////println!("{}", block);
     }
-    return true;
+    true
 }
 pub fn download_all_url(destination: &str, json_version: &JsonVersion, event: HandleEvent<CounterEvent>, on_download: HandleEvent<String>, url: &str) {
-    let assets = &save_indexes_load(format!("{}/indexes/{}.json", destination, json_version.assets.as_str()).as_str(), json_version);
+    let assets = &save_indexes_load(format!("{}/indexes/{}.json", destination, json_version.assets.clone().as_str()).as_str(), json_version);
     let mut index = 0;
     for (key, value) in &assets.objects {
         let hash = &value.hash;
