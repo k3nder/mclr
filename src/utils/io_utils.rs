@@ -1,3 +1,4 @@
+use hex::encode;
 use std::fs;
 use std::fs::File;
 use std::io::{copy, Read};
@@ -5,20 +6,10 @@ use std::path::{Path, PathBuf};
 use std::time::Duration;
 use bytes::Bytes;
 use reqwest::{Client, Error};
-
+use reqwest::blocking::get;
+use sha1::{Digest, Sha1};
+use sha1::digest::Update;
 use crate::utils::sync_utils::sync;
-
-pub async fn get(url: &String) -> Result<Bytes, Error> {
-    return match reqwest::get(url).await {
-        Ok(response) => {
-            let value = response.bytes().await?;
-            return Ok(value);
-        }
-        Err(err) => {
-            Err(err)
-        }
-    };
-}
 
 pub async fn get_string(url: &str) -> Result<String, Error> {
     return match reqwest::get(url).await {
@@ -41,26 +32,50 @@ fn fetch_data(url: &str) -> Result<Bytes, Error> {
 
     Ok(sync().block_on(response.unwrap().bytes()).unwrap())
 }
-
 pub fn download(file_str: &str, url: &str) {
     // Realiza la solicitud GET para obtener el contenido del archivo
+    let response = get(&url.to_string());
 
-    let response = reqwest::blocking::get(url);
     match response {
-        Ok(response) => {
+        Ok(mut response) => {
+            // Obtener el directorio padre y crear si no existe
             let parent_dir = get_parent_directory(Path::new(file_str)).unwrap();
-            if !parent_dir.exists() { fs::create_dir_all(parent_dir).expect("Cannot create dir") }
-            // Abre un archivo en modo de escritura para guardar el contenido descargado
-            let mut dest = File::create(file_str).unwrap();
+            if !parent_dir.exists() {
+                fs::create_dir_all(&parent_dir).expect("Cannot create dir");
+            }
 
-            // Copia el contenido de la respuesta HTTP al archivo
-            let content = response.bytes().unwrap();
-            copy(&mut content.as_ref(), &mut dest).unwrap();
+            // Abre un archivo en modo de escritura para guardar el contenido descargado
+            let mut dest = File::create(file_str).expect("Cannot create file");
+
+            // Copia el contenido de la respuesta HTTP directamente al archivo sin almacenarlo en memoria
+            copy(&mut response, &mut dest).expect("Error while copying content");
         }
         Err(_e) => {
+            // En caso de error, intenta de nuevo (puedes mejorar esto con un contador para evitar recursión infinita)
             download(file_str, url);
         }
     }
+}
+
+pub fn verify_size(_path: &Path, _size: u64) -> bool {
+    let file = File::open(_path).unwrap();
+    let metadata = file.metadata().unwrap();
+
+    metadata.len().eq(&_size)
+}
+
+pub fn calc_sha1(_path: &Path) -> String {
+    let mut file = File::open(_path).unwrap();
+
+    let mut hasher = Sha1::new();
+    let mut buffer = [0; 1024];
+    loop {
+        let bytes_readed = file.read(&mut buffer).unwrap();
+        if bytes_readed == 0 { break; }
+        Update::update(&mut hasher, &buffer[..bytes_readed])
+    }
+    let res = hasher.finalize();
+    encode(res)
 }
 
 fn get_parent_directory(path: &Path) -> Option<PathBuf> {
@@ -69,7 +84,7 @@ fn get_parent_directory(path: &Path) -> Option<PathBuf> {
 }
 
 pub mod compress {
-    use std::fs::{create_dir_all, File, metadata};
+    use std::fs::{create_dir_all, File};
     use std::{fs, io};
     use std::io::{BufReader, Read};
     use std::path::{Path};
@@ -78,7 +93,7 @@ pub mod compress {
     use tar::Archive;
     use zip::{ZipArchive};
     use crate::utils::io_utils;
-    use crate::utils::io_utils::get_resource_name;
+    use crate::utils::io_utils::{get_resource_name, verify_size};
     use crate::utils::io_utils::system::OperatingSystem;
 
     pub fn extract_zip(destination: &str, file_str: &str) {
@@ -91,7 +106,7 @@ pub mod compress {
 
         for i in 0..archive.len() {
             let mut file = archive.by_index(i).unwrap();
-            let outpath = output_dir.join(file.sanitized_name());
+            let outpath = output_dir.join(file.mangled_name());
 
             if (&*file.name()).ends_with('/') {
                 create_dir_all(&outpath).unwrap();
@@ -152,10 +167,17 @@ pub mod compress {
         archive.unpack(output_dir).unwrap()
     }
 
-    pub fn download(url: &str, destination: &str) {
+    pub fn download(url: &str, destination: &str, _size: u64, _sha1: &String) {
         let binding = get_resource_name(url).unwrap();
         let FILE: &str = binding.as_str();
         io_utils::download(FILE, url);
+
+        let _calc_sha1 = io_utils::calc_sha1(Path::new(FILE));
+
+        if !verify_size(Path::new(FILE), _size) || !(_calc_sha1.eq(_sha1)) {
+            io_utils::compress::download(url, destination, _size, _sha1);
+        }
+
         match OperatingSystem::detect() {
             OperatingSystem::Windows => {
                 extract_zip(destination, FILE);
@@ -166,15 +188,6 @@ pub mod compress {
         };
 
         fs::remove_file(FILE).expect("Cannot remove temp file jre");
-    }
-    pub fn verify_integrity(len: u64, file: &str) -> bool {
-        if Path::new(file).exists() {
-            return metadata(file).unwrap().len() == len;
-            //if compute_sha1(file).unwrap().eq(sha1) {
-            //    return true;
-            //}
-        }
-        return false;
     }
     fn compute_sha1<P: AsRef<Path>>(file_path: P) -> io::Result<String> {
         let mut file = File::open(file_path).unwrap();
@@ -226,6 +239,14 @@ pub mod system {
                 OperatingSystem::MacOS
             } else {
                 OperatingSystem::Other
+            }
+        }
+        pub fn name(&self) -> &str {
+            match self {
+                OperatingSystem::Linux => "linux",
+                OperatingSystem::Windows => "windows",
+                OperatingSystem::MacOS => "osx",
+                _ => "unknow"
             }
         }
     }
