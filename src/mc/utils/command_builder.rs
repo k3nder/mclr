@@ -60,7 +60,7 @@ impl Command {
             .arg(format!("-Djava.library.path={}", self.resources.bin))
             .arg(format!("-Dlog4j.configurationFile={}", self.resources.logger))
             .arg("-cp")
-            .arg(format!("{}:{}/*", self.resources.jar_file, self.resources.libraries))
+            .arg(format!("{}{}{}/*", self.resources.jar_file, (match OperatingSystem::detect() { OperatingSystem::Linux => ":", _ => ";" }), self.resources.libraries))
             .arg(self.version.main_class.as_str())
             .arg("--version")
             .arg(self.version.version_id.as_str())
