@@ -1,5 +1,7 @@
 use std::io::{BufRead, BufReader};
 use std::process::Stdio;
+use crate::utils::io_utils::system::OperatingSystem;
+
 pub struct Command {
     pub resources: CommandResourcesConfig,
     pub java_home: String,
@@ -39,14 +41,18 @@ pub struct CommandUserConfig {
 }
 impl Command {
     pub fn run(&self) {
-        println!("{}", self.java_home.clone());
+        //println!("{}", self.java_home.clone());
 
-        let chmod = std::process::Command::new("/bin/chmod")
-            .arg("+x")
-            .arg(self.java_home.clone().as_str())
-            .spawn();
+        match OperatingSystem::detect() { OperatingSystem::Linux => {
+            let chmod = std::process::Command::new("/bin/chmod")
+                .arg("+x")
+                .arg(self.java_home.clone().as_str())
+                .spawn();
 
-        chmod.unwrap().wait().unwrap();
+            chmod.unwrap().wait().unwrap();
+            }
+            _ => {}
+        }
 
         let mut child = std::process::Command::new(self.java_home.as_str())
             .arg(format!("-Djna.tmpdir={}", self.resources.bin))

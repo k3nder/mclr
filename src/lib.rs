@@ -25,8 +25,8 @@ mod tests {
 
 
             if !Path::new(format!("versions/{}", versions.clone().id).as_str()).exists() { fs::create_dir(format!("versions/{}", &versions.clone().id)).expect("Cannot create versions dir") }
-            let version = /*&versions.save_and_load(format!("versions/{}/{}.json", &versions.clone().id, &versions.clone().id).as_str());*/
-                json_version::load("versions/quilt-loader-0.26.3-1.21.1/quilt-loader-0.26.3-1.21.1.json");
+            let version = &versions.save_and_load(format!("versions/{}/{}.json", &versions.clone().id, &versions.clone().id).as_str());
+                // json_version::load("versions/quilt-loader-0.26.3-1.21.1/quilt-loader-0.26.3-1.21.1.json");
 
             println!("{:?}", version);
 
