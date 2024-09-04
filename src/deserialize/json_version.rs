@@ -113,7 +113,7 @@ pub struct Library {
     #[serde(default)] sha1: String,
     #[serde(default)] sha256: String,
     #[serde(default)] sha521: String,
-    #[serde(default)] size: String,
+    #[serde(default)] size: usize,
     pub(crate) extract: Option<LibraryExtract>,
 }
 #[derive(Deserialize, Debug, Clone)]
