@@ -94,6 +94,7 @@ impl Command {
             .arg(match &run_type { RunType::WORLD(name) => { "--quickPlaySingleplayer" }, RunType::SERVER(ip) => { "--quickPlayMultiplayer" }, RunType::NORMAL => { "" }   })
             .arg(match run_type { RunType::WORLD(name) => { name }, RunType::SERVER(ip) => { ip }, RunType::NORMAL => { "" }.parse().unwrap() })
             .stdout(Stdio::piped())
+            .stderr(Stdio::piped())
             .spawn().unwrap();
         //println!("run");
         // Obtener el stdout del proceso hijo
