@@ -108,7 +108,7 @@ impl Command {
 
         let reader = BufReader::new(stderr);
         for line in reader.lines() {
-            (self.event)(line.unwrap())
+            (self.err_event)(line.unwrap())
         }
 
         // Esperar a que el proceso hijo termine
