@@ -16,7 +16,8 @@ pub struct Command {
     pub user: CommandUserConfig,
     pub version: CommandVersionConfig,
     pub ram: CommandRamConfig,
-    pub event: fn(String)
+    pub event: fn(String),
+    pub err_event: fn(String)
 }
 pub struct CommandResourcesConfig {
     pub libraries: String,
@@ -97,9 +98,15 @@ impl Command {
         //println!("run");
         // Obtener el stdout del proceso hijo
         let stdout = child.stdout.take().expect("Failed to capture stdout");
+        let stderr = child.stderr.take().expect("Failed to capture stderr");
 
         // Leer la salida del proceso hijo de manera asíncrona
         let reader = BufReader::new(stdout);
+        for line in reader.lines() {
+            (self.event)(line.unwrap())
+        }
+
+        let reader = BufReader::new(stderr);
         for line in reader.lines() {
             (self.event)(line.unwrap())
         }
