@@ -2,6 +2,12 @@ use std::io::{BufRead, BufReader};
 use std::process::Stdio;
 use crate::utils::io_utils::system::OperatingSystem;
 
+pub enum RunType {
+    WORLD(String),
+    SERVER(String),
+    NORMAL
+}
+
 pub struct Command {
     pub resources: CommandResourcesConfig,
     pub java_home: String,
@@ -40,7 +46,7 @@ pub struct CommandUserConfig {
     pub user_name: String
 }
 impl Command {
-    pub fn run(&self) {
+    pub fn run(&self, run_type: RunType) {
         //println!("{}", self.java_home.clone());
 
         match OperatingSystem::detect() { OperatingSystem::Linux => {
@@ -84,6 +90,8 @@ impl Command {
             .arg(self.assets.assets_dir.as_str())
             .arg("--gameDir")
             .arg(self.game_dir.as_str())
+            .arg(match &run_type { RunType::WORLD(name) => { "--quickPlaySingleplayer" }, RunType::SERVER(ip) => { "--quickPlayMultiplayer" }, RunType::NORMAL => { "" }   })
+            .arg(match run_type { RunType::WORLD(name) => { name }, RunType::SERVER(ip) => { ip }, RunType::NORMAL => { "" }.parse().unwrap() })
             .stdout(Stdio::piped())
             .spawn().unwrap();
         //println!("run");

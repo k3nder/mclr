@@ -94,3 +94,11 @@ fn download_jar(client: &Client, file_str: &str){
         io_utils::download(file_str, client.url.as_str());
     }
 }
+fn check_jar(clientj: &JsonVersion, file_str: &str) {
+    let client = &clientj.downloads.client;
+    let _path = Path::new(file_str);
+    let _calc_sha1 = calc_sha1(_path);
+    if !verify_size(_path, client.size) || !(_calc_sha1.eq(&client.sha1)) {
+        io_utils::download(file_str, client.url.as_str());
+    }
+}

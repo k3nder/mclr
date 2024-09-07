@@ -10,7 +10,7 @@ mod tests {
     use crate::deserialize::json_version::JsonVersion;
     use crate::mc;
     use crate::mc::get_compatible_java;
-    use crate::mc::utils::command_builder::{CommandAssetsConfig, CommandRamConfig, CommandResourcesConfig, CommandUserConfig};
+    use crate::mc::utils::command_builder::{CommandAssetsConfig, CommandRamConfig, CommandResourcesConfig, CommandUserConfig, RunType};
     use crate::utils::HandleEvent;
     use crate::utils::manifest::manifest;
     use crate::utils::sync_utils::sync;
@@ -89,7 +89,7 @@ mod tests {
                 event: |_s: String| {
                     println!("{}", _s);
                 },
-            }.run();
+            }.run(RunType::SERVER("oblision.es".to_string()));
         }
 //assert_eq!(true, true)
     }

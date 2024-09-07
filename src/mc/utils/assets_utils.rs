@@ -4,7 +4,7 @@ use std::path::Path;
 use crate::deserialize::assets::Assets;
 use crate::deserialize::json_version::JsonVersion;
 use crate::utils::{CounterEvent, HandleEvent, io_utils};
-use crate::utils::io_utils::download;
+use crate::utils::io_utils::{download, verify_size};
 
 const BASE_URL: &str = "https://resources.download.minecraft.net";
 
@@ -12,16 +12,16 @@ pub fn save_indexes_load(file_str: &str, json: &JsonVersion) -> Assets {
     let indexes = &json.assetIndex;
     io_utils::download(file_str, &indexes.clone().url);
     let content = std::fs::read_to_string(file_str).unwrap();
-    return serde_json::from_str(&content.as_str()).unwrap();
+    serde_json::from_str(&content.as_str()).unwrap()
 }
 
 pub fn download_all(destination: &str, json_version: &JsonVersion,on_download: HandleEvent<String> , event: HandleEvent<CounterEvent>) {
     download_all_url(destination, json_version, event, on_download, BASE_URL)
 }
-pub fn verify(destination: &str, json_version: &JsonVersion, counter: HandleEvent<CounterEvent>) -> bool {
-    verify_url(destination, json_version, counter, BASE_URL)
+pub fn check(destination: &str, json_version: &JsonVersion, counter: HandleEvent<CounterEvent>) -> bool {
+    check_url(destination, json_version, counter, BASE_URL)
 }
-pub fn verify_url(destination: &str, json_version: &JsonVersion, counter: HandleEvent<CounterEvent>, url: &str) -> bool {
+pub fn check_url(destination: &str, json_version: &JsonVersion, counter: HandleEvent<CounterEvent>, url: &str) -> bool {
     let assets = &save_indexes_load(format!("{}/indexes/{}.json", destination, json_version.assets.clone().as_str()).as_str(), json_version);
     let mut index = 0;
     for (key, value) in &assets.objects {
@@ -37,11 +37,13 @@ pub fn verify_url(destination: &str, json_version: &JsonVersion, counter: Handle
         ////println!("{}", key);
         counter.event(CounterEvent::new(assets.objects.len(), index));
 
+        let obj_p = Path::new(&object_path);
+        let value_p = Path::new(&path);
 
-        //if ( verify_size(obj_p, value.size) || verify_size(value_p, value.size)) {
-        //    ////println!("e");
-        //    return false;
-        //}
+        if !verify_size(obj_p, value.size) || !verify_size(value_p, value.size) {
+            ////println!("e");
+            return false;
+        }
         ////println!("{}", block);
     }
     true
