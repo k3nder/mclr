@@ -805,7 +805,7 @@ dependencies = [
 
 [[package]]
 name = "mclr"
-version = "2.2.2"
+version = "2.3.1-c"
 dependencies = [
  "blocking",
  "bytes",
