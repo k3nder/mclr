@@ -2,6 +2,7 @@
 pub mod deserialize;
 pub mod mc;
 pub mod utils;
+
 mod tests {
     use std::fmt::Write;
     use std::fs;
@@ -89,6 +90,9 @@ mod tests {
                 event: |_s: String| {
                     println!("{}", _s);
                 },
+                err_event: |e: String| {
+                    println!("{}", e);
+                }
             }.run(RunType::SERVER("oblision.es".to_string()));
         }
 //assert_eq!(true, true)

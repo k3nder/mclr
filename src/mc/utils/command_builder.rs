@@ -99,7 +99,7 @@ impl Command {
         //println!("run");
         // Obtener el stdout del proceso hijo
         let stdout = child.stdout.take().expect("Failed to capture stdout");
-        let stderr = child.stderr.take().expect("Failed to capture stderr");
+        //let stderr = child.stderr.take().expect("Failed to capture stderr");
 
         // Leer la salida del proceso hijo de manera asíncrona
         let reader = BufReader::new(stdout);
@@ -107,10 +107,10 @@ impl Command {
             (self.event)(line.unwrap())
         }
 
-        let reader = BufReader::new(stderr);
-        for line in reader.lines() {
-            (self.err_event)(line.unwrap())
-        }
+        //let reader = BufReader::new(stderr);
+        //for line in reader.lines() {
+        //    (self.err_event)(line.unwrap())
+        //}
 
         // Esperar a que el proceso hijo termine
         child.wait().unwrap();
