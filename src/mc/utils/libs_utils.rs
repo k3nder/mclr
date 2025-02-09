@@ -42,12 +42,14 @@ impl MavenLibrary {
 pub fn get_libs(destination: &str, binary_destination: &str, libs: &Vec<Library>, event: HandleEvent<CounterEvent>) -> Result<(), Box<dyn std::error::Error>> {
     let mut index = 0;
     for lib in libs {
-        //println!("{}", &lib.clone().name.as_str());
+        println!("Checking... {}", &lib.clone().name.as_str());
         let natives = &&lib.clone().natives;
         if let Some(downloads) = &lib.clone().downloads {
             // artifact
+            println!("Downloading as artifact...");
             artifact_download(destination, &lib, &downloads);
             // classfiers
+            println!("Downloading as classifier...");
             classifier_download(destination, binary_destination, natives, &downloads);
         } else {
             let lib = MavenLibrary::parse(lib.clone().name, lib.clone().url);
@@ -89,13 +91,17 @@ fn classifier_download(destination: &str, binary_destination: &str, natives: &&O
     let clc = &downloads.clone().classifiers;
     if !clc.is_none() {
         let native_key = get_natives_value(natives.clone());
+        println!("Find native classifier... {}", native_key.as_str());
         if let Some(n) = &clc.clone().unwrap().get(&native_key) {
-
+            println!("Download allowed...");
             let file = format!("{}/{}", destination, get_resource_name(&n.clone().url).unwrap().as_str());
-
             download(&file, &n.clone().url);
             extract_zip(binary_destination, file.as_str());
+        } else {
+            println!("Download failed... No native classifier found");
         }
+    } else {
+        println!("No classifiers on lib...");
     }
 }
 
@@ -123,9 +129,13 @@ fn artifact_download(destination: &str, lib: &&Library, downloads: &&LibraryDown
         let file = format!("{}/{}", destination, get_resource_name(&a.clone().url).unwrap().as_str());
         if let Some(r) = &lib.clone().rules {
             if find_out_os(r) {
+                println!("Allow by OS... {}", file);
                 download(&file, &a.clone().url);
+            } else {
+                println!("Not Allow by OS... {}", file);
             }
         } else {
+            println!("Allow by no rules... {}", file);
             download(format!("{}/{}", destination, get_resource_name(&a.clone().url).unwrap().as_str()).as_str(), &a.clone().url);
         }
     }
@@ -185,7 +195,9 @@ fn fill(s: &String, k: String, v: String) -> String {
 
 fn find_out_os(rules: &[LibraryRule]) -> bool {
     let sys = OperatingSystem::detect();
+    println!("Finding out OS... {:?}", sys);
     for rule in rules {
+        println!("check... {:?}", rule);
         if !rule.allow(&sys) { return false }
     }
     true

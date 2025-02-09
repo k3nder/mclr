@@ -22,7 +22,7 @@ mod tests {
         if let Some(version_index) = version_index {
             //CONSOLE_HISTORY.push("downloading...".to_string());
             let b = manifest();
-            let versions = b.versions.get(0).unwrap();
+            let versions = b.get("1.8.9").unwrap();
 
 
             if !Path::new(format!("versions/{}", versions.clone().id).as_str()).exists() { fs::create_dir(format!("versions/{}", &versions.clone().id)).expect("Cannot create versions dir") }
@@ -60,6 +60,8 @@ mod tests {
             if let Some(logg) = &version.clone().logging {
                 mc::get_config_logger(logg, "assets/log/log4j.xml");
             }
+
+            println!("Running");
 
             mc::utils::command_builder::Command {
                 resources: CommandResourcesConfig {

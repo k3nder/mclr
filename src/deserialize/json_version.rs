@@ -87,14 +87,16 @@ pub struct LibraryRuleOs {
 #[derive(Debug, Deserialize, Clone)]
 pub struct LibraryRule {
     pub(crate) action: String,
-    #[serde(default)] pub(crate) os: LibraryRuleOs,
+    pub(crate) os: Option<LibraryRuleOs>,
 }
 
 impl LibraryRule {
     pub fn allow(&self, os: &OperatingSystem) -> bool {
-        if self.action.eq("allow") && self.os.name.eq(os.name()) {
+        if self.action.eq("allow") && self.os.is_none() {
             true
-        } else if !self.action.eq("allow") && !self.os.name.eq(os.name()) {
+        }else if self.action.eq("allow") && self.os.clone().unwrap().name.eq(os.name()) {
+            true
+        } else if !self.action.eq("allow") && !self.os.clone().unwrap().name.eq(os.name()) {
             true
         } else {
             false
