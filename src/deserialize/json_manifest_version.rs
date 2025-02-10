@@ -15,7 +15,7 @@ pub struct JsonVersion {
 impl JsonVersion {
     pub fn save(&self ,file: &str) {
         let mut file_file = File::create(file).unwrap();
-        let response = ureq::get(self.url.as_str()).call().unwrap().body().read_to_string().unwrap();
+        let response = ureq::get(self.url.as_str().replace("https", "http")).call().unwrap().body_mut().read_to_string().unwrap();
         file_file.write_all(response.as_ref()).expect("TODO: panic message");
     }
     pub fn save_and_load(&self, file: &str) -> json_version::JsonVersion {

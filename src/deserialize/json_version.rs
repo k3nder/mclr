@@ -1,9 +1,7 @@
 use std::collections::HashMap;
 use std::fs::File;
-use std::io::{Error, Read};
+use std::io::Read;
 use serde::{Deserialize};
-use crate::deserialize::json_manifest;
-use crate::mc;
 use crate::mc::utils::command_builder::{CommandVersionConfig};
 use crate::utils::io_utils::system::OperatingSystem;
 use crate::utils::manifest::manifest;

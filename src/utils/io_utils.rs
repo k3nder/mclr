@@ -10,8 +10,8 @@ use crate::utils::sync_utils::sync;
 pub fn download(file_str: &str, url: &str) {
     // Realiza la solicitud GET para obtener el contenido del archivo
     // Obtener el directorio padre y crear si no existe
-    let response = ureq::get(url).call().expect("ureq call failed");
-    let mut response = response.body().read_to_vec().unwrap();
+    let mut response = ureq::get(url).call().expect("ureq call failed");
+    let mut response = response.body_mut().read_to_vec().unwrap();
 
     let parent_dir = get_parent_directory(Path::new(file_str)).unwrap();
     if !parent_dir.exists() {

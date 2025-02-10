@@ -1,6 +1,6 @@
 [package]
 name = "mclr"
-version = "2.3.2"
+version = "2.3.2-a"
 edition = "2021"
 authors = ["k3nder"]
 rust-version = "1.71.0"
@@ -16,7 +16,7 @@ license = "Apache-2.0"
 [dependencies]
 serde = { version = "1.0.201", features = ["derive"] }
 bytes = "1.6.0"
-ureq = {version = "3.0.5", default-features = false}
+ureq = {version = "3.0.5", default-features = false, features = ["rustls"]}
 tokio = { version = "1", features = ["full"] }
 serde_json = "1.0.117"
 zip = "2.1.0"
@@ -24,3 +24,4 @@ tar = "0.4.40"
 flate2 = "1.0.30"
 hex = "0.4.3"
 url = "2.5.4"
+rustls = "0.23.22"

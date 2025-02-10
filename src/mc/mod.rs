@@ -88,9 +88,7 @@ fn download_jar(client: &Client, file_str: &str){
     if !_path.exists() {
         io_utils::download(file_str, client.url.as_str());
     }
-
-    let _calc_sha1 = calc_sha1(_path);
-    if !verify_size(_path, client.size) || !(_calc_sha1.eq(&client.sha1)) {
+    if !verify_size(_path, client.size) {
         io_utils::download(file_str, client.url.as_str());
     }
 }
