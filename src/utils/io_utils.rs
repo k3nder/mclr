@@ -136,25 +136,25 @@ pub mod compress {
 
     pub fn download(url: &str, destination: &str, _size: u64, _sha1: &String) {
         let binding = get_resource_name(url).unwrap();
-        let FILE: &str = binding.as_str();
-        io_utils::download(FILE, url);
+        let file: &str = binding.as_str();
+        io_utils::download(file, url);
 
-        let _calc_sha1 = io_utils::calc_sha1(Path::new(FILE));
+        //let _calc_sha1 = io_utils::calc_sha1(Path::new(FILE));
 
-        if !verify_size(Path::new(FILE), _size) {
+        if !verify_size(Path::new(file), _size) {
             io_utils::compress::download(url, destination, _size, _sha1);
         }
 
         match OperatingSystem::detect() {
             OperatingSystem::Windows => {
-                extract_zip(destination, FILE);
+                extract_zip(destination, file);
             }
             _ => {
-                extract_tar(destination, FILE);
+                extract_tar(destination, file);
             }
         };
 
-        fs::remove_file(FILE).expect("Cannot remove temp file jre");
+        fs::remove_file(file).expect("Cannot remove temp file jre");
     }
     fn compute_sha1<P: AsRef<Path>>(file_path: P) -> io::Result<String> {
         let mut file = File::open(file_path).unwrap();
