@@ -5,13 +5,15 @@ use std::io::{copy, Read, Write};
 use std::path::{Path, PathBuf};
 use std::time::Duration;
 use bytes::Bytes;
+use ureq::Agent;
 use crate::utils::sync_utils::sync;
 
 pub fn download(file_str: &str, url: &str) {
     // Realiza la solicitud GET para obtener el contenido del archivo
     // Obtener el directorio padre y crear si no existe
+
     let mut response = ureq::get(url).call().expect("ureq call failed");
-    let mut response = response.body_mut().read_to_vec().unwrap();
+    let mut response = response.body_mut().as_reader();
 
     let parent_dir = get_parent_directory(Path::new(file_str)).unwrap();
     if !parent_dir.exists() {
@@ -19,7 +21,7 @@ pub fn download(file_str: &str, url: &str) {
     }
     // Abre un archivo en modo de escritura para guardar el contenido descargad
     let mut file = File::create(file_str).expect("Cannot open file");
-    file.write_all(&mut response).expect("Cannot write to file");
+    copy(&mut response, &mut file).expect("Cannot write to file");
 }
 
 pub fn verify_size(_path: &Path, _size: u64) -> bool {
