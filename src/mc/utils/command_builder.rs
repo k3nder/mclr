@@ -17,7 +17,8 @@ pub struct Command {
     pub version: CommandVersionConfig,
     pub ram: CommandRamConfig,
     pub event: fn(String),
-    pub err_event: fn(String)
+    pub err_event: fn(String),
+    pub args: Vec<String>,
 }
 pub struct CommandResourcesConfig {
     pub libraries: String,
@@ -61,7 +62,8 @@ impl Command {
             _ => {}
         }
 
-        let mut child = std::process::Command::new(self.java_home.as_str())
+        let mut binding = std::process::Command::new(self.java_home.as_str());
+        let mut child = binding
             .arg(format!("-Djna.tmpdir={}", self.resources.bin))
             .arg(format!("-Dio.netty.native.workdir={}", self.resources.bin))
             .arg(format!("-Djava.library.path={}", self.resources.bin))
@@ -92,10 +94,16 @@ impl Command {
             .arg("--gameDir")
             .arg(self.game_dir.as_str())
             .arg(match &run_type { RunType::WORLD(name) => { "--quickPlaySingleplayer" }, RunType::SERVER(ip) => { "--quickPlayMultiplayer" }, RunType::NORMAL => { "" }   })
-            .arg(match run_type { RunType::WORLD(name) => { name }, RunType::SERVER(ip) => { ip }, RunType::NORMAL => { "" }.parse().unwrap() })
-            .stdout(Stdio::piped())
+            .arg(match run_type { RunType::WORLD(name) => { name }, RunType::SERVER(ip) => { ip }, RunType::NORMAL => { "" }.parse().unwrap() });
+
+        for arg in &self.args {
+            child.arg(arg);
+        }
+
+        let mut child = child.stdout(Stdio::piped())
             .stderr(Stdio::piped())
             .spawn().unwrap();
+
         //println!("run");
         // Obtener el stdout del proceso hijo
         let stdout = child.stdout.take().expect("Failed to capture stdout");

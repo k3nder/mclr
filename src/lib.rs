@@ -94,7 +94,8 @@ mod tests {
                 },
                 err_event: |e: String| {
                     println!("{}", e);
-                }
+                },
+                args: vec![]
             }.run(RunType::SERVER("oblision.es".to_string()));
         }
 //assert_eq!(true, true)
