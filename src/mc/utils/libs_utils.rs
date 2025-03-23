@@ -1,37 +1,44 @@
+use dwldutil::decompress::{DLDecompressionConfig, DecompressionMethod};
+use dwldutil::{DLBuilder, DLFile};
+use log::debug;
 
+use crate::deserialize::json_version::{Library, LibraryDownloads, LibraryNatives, LibraryRule};
 use std::cmp::PartialEq;
 use std::path::Path;
-use crate::deserialize::json_version::{Library, LibraryDownloads, LibraryNatives, LibraryRule};
 
-use crate::utils::{CounterEvent, HandleEvent, io_utils};
-use crate::utils::io_utils::{calc_sha1, download, get_resource_name, verify_size};
-use crate::utils::io_utils::compress::extract_zip;
 use crate::utils::io_utils::system::OperatingSystem;
-
+use crate::utils::io_utils::{get_resource_name, verify_size};
+use crate::utils::{io_utils, CounterEvent, HandleEvent};
 
 struct MavenLibrary {
     pub groupID: String,
     pub artifactID: String,
     pub version: String,
-    pub repository: String
+    pub repository: String,
 }
 
 impl MavenLibrary {
     pub fn parse(name: String, repository: String) -> Self {
-
         let tokens: Vec<&str> = name.split(":").collect();
 
         MavenLibrary {
             repository,
             groupID: tokens.get(0).unwrap().to_string(),
             artifactID: tokens.get(1).unwrap().to_string(),
-            version: tokens.get(2).unwrap().to_string()
+            version: tokens.get(2).unwrap().to_string(),
         }
     }
 
     pub fn all_URL(&self) -> String {
         let group = self.groupID.replace(".", "/");
-        format!("{}{}/{}/{}/{}", self.repository, group, self.artifactID, self.version, self.cl_name())
+        format!(
+            "{}{}/{}/{}/{}",
+            self.repository,
+            group,
+            self.artifactID,
+            self.version,
+            self.cl_name()
+        )
     }
 
     pub fn cl_name(&self) -> String {
@@ -39,128 +46,113 @@ impl MavenLibrary {
     }
 }
 
-pub fn get_libs(destination: &str, binary_destination: &str, libs: &Vec<Library>, event: HandleEvent<CounterEvent>) -> Result<(), Box<dyn std::error::Error>> {
+pub fn filter_libs(
+    destination: &str,
+    binary_destination: &str,
+    libs: &Vec<Library>,
+    event: HandleEvent<CounterEvent>,
+) -> Result<DLBuilder, String> {
     let mut index = 0;
+    let mut filtered_files: Vec<DLFile> = Vec::new();
     for lib in libs {
-        println!("Checking... {}", &lib.clone().name.as_str());
+        debug!("Checking... {}", &lib.clone().name.as_str());
         let natives = &&lib.clone().natives;
         if let Some(downloads) = &lib.clone().downloads {
             // artifact
-            println!("Downloading as artifact...");
-            artifact_download(destination, &lib, &downloads);
+            debug!("Downloading as artifact...");
+            match artifact_download(destination, &lib, &downloads) {
+                Ok(file) => filtered_files.push(file),
+                Err(e) => debug!("Error downloading artifact: {}", e),
+            }
             // classfiers
-            println!("Downloading as classifier...");
-            classifier_download(destination, binary_destination, natives, &downloads);
+            debug!("Downloading as classifier...");
+            match classifier_download(destination, binary_destination, natives, &downloads) {
+                Ok(file) => filtered_files.push(file),
+                Err(e) => debug!("Error downloading classifier: {}", e),
+            }
         } else {
             let lib = MavenLibrary::parse(lib.clone().name, lib.clone().url);
-            io_utils::download(format!("{}/{}", destination, lib.cl_name().as_str()).as_str(), lib.all_URL().as_str());
+            filtered_files.push(
+                DLFile::new()
+                    .with_url(lib.all_URL().as_str())
+                    .with_path(format!("{}/{}", destination, lib.cl_name().as_str()).as_str()),
+            );
         }
         index += 1;
         event.event(CounterEvent::new(libs.len(), index));
     }
-
-    Ok(())
+    Ok(DLBuilder::from_files(filtered_files))
 }
 
-pub fn check(destination: &str, binary_destination: &str, libs: &Vec<Library>, event: HandleEvent<CounterEvent>) -> bool {
-    let mut index = 0;
-    for lib in libs {
-        //println!("{}", &lib.clone().name.as_str());
-        let natives = &&lib.clone().natives;
-        if let Some(downloads) = &lib.clone().downloads {
-            // artifact
-            artifact_check(destination, &lib, &downloads);
-            // classfiers
-            classifier_check(destination, natives, &downloads);
-        } else {
-            let mlib = MavenLibrary::parse(lib.clone().name, lib.clone().url);
-            let file = format!("{}/{}", destination, mlib.cl_name().as_str());
-
-            let _path = Path::new(&file);
-            let _sha1 = calc_sha1(_path);
-
-            return true;
-        }
-        index += 1;
-        event.event(CounterEvent::new(libs.len(), index));
-    }
-    true
-}
-
-fn classifier_download(destination: &str, binary_destination: &str, natives: &&Option<LibraryNatives>, downloads: &&LibraryDownloads) {
+fn classifier_download(
+    destination: &str,
+    binary_destination: &str,
+    natives: &&Option<LibraryNatives>,
+    downloads: &&LibraryDownloads,
+) -> Result<DLFile, String> {
     let clc = &downloads.clone().classifiers;
     if !clc.is_none() {
         let native_key = get_natives_value(natives.clone());
-        println!("Find native classifier... {}", native_key.as_str());
+        debug!("Find native classifier... {}", native_key.as_str());
         if let Some(n) = &clc.clone().unwrap().get(&native_key) {
-            println!("Download allowed...");
-            let file = format!("{}/{}", destination, get_resource_name(&n.clone().url).unwrap().as_str());
-            download(&file, &n.clone().url);
-            extract_zip(binary_destination, file.as_str());
+            debug!("Download allowed...");
+            let file = format!(
+                "{}/{}",
+                destination,
+                get_resource_name(&n.clone().url).unwrap().as_str()
+            );
+            return Ok(DLFile::new()
+                .with_url(&n.clone().url)
+                .with_path(&file)
+                .with_size(n.clone().size)
+                .with_decompression_config(
+                    DLDecompressionConfig::new(DecompressionMethod::Zip, binary_destination)
+                        .with_delete_after(false),
+                ));
         } else {
-            println!("Download failed... No native classifier found");
+            return Err("Download failed... No native classifier found".to_string());
         }
     } else {
-        println!("No classifiers on lib...");
+        return Err("No classifiers on lib...".to_string());
     }
 }
 
-
-
-fn classifier_check(destination: &str, natives: &&Option<LibraryNatives>, downloads: &&LibraryDownloads) -> bool {
-    let clc = &downloads.clone().classifiers;
-    if !clc.is_none() {
-        let native_key = get_natives_value(natives.clone());
-        if let Some(n) = &clc.clone().unwrap().get(&native_key) {
-
-            let file = format!("{}/{}", destination, get_resource_name(&n.clone().url).unwrap().as_str());
-
-            let _path = Path::new(&file);
-            let _sha1 = calc_sha1(_path);
-
-            return !(!verify_size(_path, n.size) || !n.sha1.eq(&_sha1))
-        }
-    }
-    true
-}
-
-fn artifact_download(destination: &str, lib: &&Library, downloads: &&LibraryDownloads) {
+fn artifact_download(
+    destination: &str,
+    lib: &&Library,
+    downloads: &&LibraryDownloads,
+) -> Result<DLFile, String> {
     if let Some(a) = &downloads.clone().artifact {
-        let file = format!("{}/{}", destination, get_resource_name(&a.clone().url).unwrap().as_str());
+        let file = format!(
+            "{}/{}",
+            destination,
+            get_resource_name(&a.clone().url).unwrap().as_str()
+        );
         if let Some(r) = &lib.clone().rules {
             if find_out_os(r) {
-                println!("Allow by OS... {}", file);
-                download(&file, &a.clone().url);
+                return Ok(DLFile::new()
+                    .with_url(&a.clone().url)
+                    .with_path(&file)
+                    .with_size(a.clone().size));
             } else {
-                println!("Not Allow by OS... {}", file);
+                return Err(format!("Not Allow by OS... {}", file));
             }
         } else {
-            println!("Allow by no rules... {}", file);
-            download(format!("{}/{}", destination, get_resource_name(&a.clone().url).unwrap().as_str()).as_str(), &a.clone().url);
+            debug!("Allow by no rules... {}", file);
+            return Ok(DLFile::new()
+                .with_url(&a.clone().url)
+                .with_path(
+                    format!(
+                        "{}/{}",
+                        destination,
+                        get_resource_name(&a.clone().url).unwrap().as_str()
+                    )
+                    .as_str(),
+                )
+                .with_size(a.clone().size));
         }
     }
-}
-
-
-fn artifact_check(destination: &str, lib: &&Library, downloads: &&LibraryDownloads) -> bool {
-    if let Some(a) = &downloads.clone().artifact {
-        let file = format!("{}/{}", destination, get_resource_name(&a.clone().url).unwrap().as_str());
-        if let Some(r) = &lib.clone().rules {
-            if find_out_os(r) {
-
-                let _path = Path::new(&file);
-                let _sha1 = calc_sha1(_path);
-
-                return !(!verify_size(_path, a.size) || !a.sha1.eq(&_sha1))
-            }
-        } else {
-            let _path = Path::new(&file);
-            let _sha1 = calc_sha1(_path);
-
-            return !(!verify_size(_path, a.size) || !a.sha1.eq(&_sha1))
-        }
-    }
-    true
+    Err("Artifact not found".to_string())
 }
 
 fn get_natives_value(n: &Option<LibraryNatives>) -> String {
@@ -173,7 +165,7 @@ fn get_natives_value(n: &Option<LibraryNatives>) -> String {
                 } else {
                     "".to_string()
                 }
-            },
+            }
             OperatingSystem::Linux => {
                 if let Some(raw) = &n.clone().linux {
                     fill(raw, "arch".to_string(), "x64".to_string()).to_string()
@@ -181,24 +173,28 @@ fn get_natives_value(n: &Option<LibraryNatives>) -> String {
                     "".to_string()
                 }
             }
-            _ => { "".to_string() }
+            _ => "".to_string(),
         }
     } else {
         "n".to_string()
     }
 }
 fn fill(s: &String, k: String, v: String) -> String {
-    if !s.contains(k.as_str()) { return s.to_string(); }
+    if !s.contains(k.as_str()) {
+        return s.to_string();
+    }
     let ss = s.replace(format!("${k}").as_str(), v.as_str());
     ss.clone()
 }
 
 fn find_out_os(rules: &[LibraryRule]) -> bool {
     let sys = OperatingSystem::detect();
-    println!("Finding out OS... {:?}", sys);
+    debug!("Finding out OS... {:?}", sys);
     for rule in rules {
-        println!("check... {:?}", rule);
-        if !rule.allow(&sys) { return false }
+        debug!("check... {:?}", rule);
+        if !rule.allow(&sys) {
+            return false;
+        }
     }
     true
 }

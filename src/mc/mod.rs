@@ -1,25 +1,26 @@
 pub mod utils;
 
-use std::path::Path;
-use crate::utils::io_utils;
-use crate::utils::io_utils::{calc_sha1, compress, verify_size};
-use io_utils::system::OperatingSystem;
 use crate::deserialize::json_version::{Client, JavaVersion, JsonVersion, LogSettings};
+use crate::utils::io_utils;
+use crate::utils::io_utils::{compress, verify_size};
+use dwldutil::{DLBuilder, DLFile};
+use io_utils::system::OperatingSystem;
+use std::path::Path;
 
 pub struct JreUrls {
     pub windows: Box<JREPlatform>,
-    pub other: Box<JREPlatform>
+    pub other: Box<JREPlatform>,
 }
 pub struct JREPlatform {
     pub JRE8: JRE,
-    pub JRE21: JRE
+    pub JRE21: JRE,
 }
 #[derive(Clone)]
 pub struct JRE {
     pub url: String,
     pub name: String,
     pub size: u64,
-    pub sha1: String
+    pub sha1: String,
 }
 pub fn get_compatible_java(destination: &str, version: &JavaVersion) -> String {
     get_compatible_java_urls(destination, version, JreUrls {
@@ -54,14 +55,19 @@ pub fn get_compatible_java(destination: &str, version: &JavaVersion) -> String {
     })
 }
 pub fn get_config_logger(log: &LogSettings, destination: &str) {
-    io_utils::download(destination,log.client.file.url.as_str());
+    let dl = DLBuilder::new().add_file(
+        DLFile::new()
+            .with_url(&log.client.file.url)
+            .with_path(destination),
+    );
+    dl.start();
 }
 pub fn get_compatible_java_urls(destination: &str, version: &JavaVersion, urls: JreUrls) -> String {
     let system: OperatingSystem = OperatingSystem::detect();
     let platform: JREPlatform = match system {
         OperatingSystem::Windows => *urls.windows,
         OperatingSystem::Linux => *urls.other,
-        _ => *urls.other
+        _ => *urls.other,
     };
 
     let _jre = if version.majorVersion <= 8 {
@@ -75,28 +81,22 @@ pub fn get_compatible_java_urls(destination: &str, version: &JavaVersion, urls: 
 
 fn jre(url: JRE, destination: &str) {
     if !Path::new(format!("{destination}/{}", url.name).as_str()).exists() {
-        compress::download(url.url.as_str(), format!("{destination}").as_str(), url.size, &url.sha1);
+        compress::download(
+            url.url.as_str(),
+            format!("{destination}").as_str(),
+            url.size,
+            &url.sha1,
+        );
     }
 }
-pub fn download(destination: &str,json_version: &JsonVersion) {
+pub fn download(destination: &str, json_version: &JsonVersion) {
     download_jar(&json_version.downloads.client, destination);
 }
-fn download_jar(client: &Client, file_str: &str){
-
+fn download_jar(client: &Client, file_str: &str) {
     let _path = Path::new(file_str);
 
-    if !_path.exists() {
-        io_utils::download(file_str, client.url.as_str());
-    }
-    if !verify_size(_path, client.size) {
-        io_utils::download(file_str, client.url.as_str());
-    }
-}
-fn check_jar(clientj: &JsonVersion, file_str: &str) {
-    let client = &clientj.downloads.client;
-    let _path = Path::new(file_str);
-    let _calc_sha1 = calc_sha1(_path);
-    if !verify_size(_path, client.size) || !(_calc_sha1.eq(&client.sha1)) {
-        io_utils::download(file_str, client.url.as_str());
+    if !_path.exists() || !verify_size(_path, client.size) {
+        let dl = DLBuilder::new().add_file(DLFile::new().with_url(&client.url).with_path(file_str));
+        dl.start();
     }
 }
