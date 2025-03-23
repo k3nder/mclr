@@ -16,7 +16,7 @@ license = "Apache-2.0"
 [dependencies]
 serde = { version = "1.0.201", features = ["derive"] }
 bytes = "1.6.0"
-dwldutil = { version = "1.0.2", features = [
+dwldutil = { version = "1.1.0", features = [
     "normal_zip",
     "gzip",
     "decompress",
@@ -27,3 +27,5 @@ tar = "0.4.40"
 flate2 = "1.0.30"
 hex = "0.4.3"
 url = "2.5.4"
+log = "0.4.17"
+env_logger = "0.10.0"
