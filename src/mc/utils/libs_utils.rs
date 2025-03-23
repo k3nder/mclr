@@ -3,16 +3,13 @@ use dwldutil::{DLBuilder, DLFile};
 use log::debug;
 
 use crate::deserialize::json_version::{Library, LibraryDownloads, LibraryNatives, LibraryRule};
-use std::cmp::PartialEq;
-use std::path::Path;
-
+use crate::utils::io_utils::get_resource_name;
 use crate::utils::io_utils::system::OperatingSystem;
-use crate::utils::io_utils::{get_resource_name, verify_size};
-use crate::utils::{io_utils, CounterEvent, HandleEvent};
+use crate::utils::{CounterEvent, HandleEvent};
 
 struct MavenLibrary {
-    pub groupID: String,
-    pub artifactID: String,
+    pub group_id: String,
+    pub artifact_id: String,
     pub version: String,
     pub repository: String,
 }
@@ -23,26 +20,26 @@ impl MavenLibrary {
 
         MavenLibrary {
             repository,
-            groupID: tokens.get(0).unwrap().to_string(),
-            artifactID: tokens.get(1).unwrap().to_string(),
+            group_id: tokens.get(0).unwrap().to_string(),
+            artifact_id: tokens.get(1).unwrap().to_string(),
             version: tokens.get(2).unwrap().to_string(),
         }
     }
 
-    pub fn all_URL(&self) -> String {
-        let group = self.groupID.replace(".", "/");
+    pub fn all_url(&self) -> String {
+        let group = self.group_id.replace(".", "/");
         format!(
             "{}{}/{}/{}/{}",
             self.repository,
             group,
-            self.artifactID,
+            self.artifact_id,
             self.version,
             self.cl_name()
         )
     }
 
     pub fn cl_name(&self) -> String {
-        format!("{}-{}.jar", self.artifactID, self.version)
+        format!("{}-{}.jar", self.artifact_id, self.version)
     }
 }
 
@@ -74,7 +71,7 @@ pub fn filter_libs(
             let lib = MavenLibrary::parse(lib.clone().name, lib.clone().url);
             filtered_files.push(
                 DLFile::new()
-                    .with_url(lib.all_URL().as_str())
+                    .with_url(lib.all_url().as_str())
                     .with_path(format!("{}/{}", destination, lib.cl_name().as_str()).as_str()),
             );
         }
@@ -90,21 +87,21 @@ fn classifier_download(
     natives: &&Option<LibraryNatives>,
     downloads: &&LibraryDownloads,
 ) -> Result<DLFile, String> {
-    let clc = &downloads.clone().classifiers;
+    let clc = &downloads.classifiers;
     if !clc.is_none() {
-        let native_key = get_natives_value(natives.clone());
+        let native_key = get_natives_value(natives);
         debug!("Find native classifier... {}", native_key.as_str());
         if let Some(n) = &clc.clone().unwrap().get(&native_key) {
             debug!("Download allowed...");
             let file = format!(
                 "{}/{}",
                 destination,
-                get_resource_name(&n.clone().url).unwrap().as_str()
+                get_resource_name(&n.url).unwrap().as_str()
             );
             return Ok(DLFile::new()
-                .with_url(&n.clone().url)
+                .with_url(&n.url)
                 .with_path(&file)
-                .with_size(n.clone().size)
+                .with_size(n.size)
                 .with_decompression_config(
                     DLDecompressionConfig::new(DecompressionMethod::Zip, binary_destination)
                         .with_delete_after(false),
@@ -122,13 +119,13 @@ fn artifact_download(
     lib: &&Library,
     downloads: &&LibraryDownloads,
 ) -> Result<DLFile, String> {
-    if let Some(a) = &downloads.clone().artifact {
+    if let Some(a) = &downloads.artifact {
         let file = format!(
             "{}/{}",
             destination,
             get_resource_name(&a.clone().url).unwrap().as_str()
         );
-        if let Some(r) = &lib.clone().rules {
+        if let Some(r) = &lib.rules {
             if find_out_os(r) {
                 return Ok(DLFile::new()
                     .with_url(&a.clone().url)
