@@ -1,11 +1,11 @@
+use crate::utils::io_utils::system::OperatingSystem;
 use std::io::{BufRead, BufReader};
 use std::process::Stdio;
-use crate::utils::io_utils::system::OperatingSystem;
 
 pub enum RunType {
     WORLD(String),
     SERVER(String),
-    NORMAL
+    NORMAL,
 }
 
 pub struct Command {
@@ -24,20 +24,20 @@ pub struct CommandResourcesConfig {
     pub libraries: String,
     pub jar_file: String,
     pub bin: String,
-    pub logger: String
+    pub logger: String,
 }
 pub struct CommandRamConfig {
     pub xmx: i32,
-    pub xms: i32
+    pub xms: i32,
 }
 pub struct CommandAssetsConfig {
     pub assets_dir: String,
-    pub assets_index: String
+    pub assets_index: String,
 }
 pub struct CommandVersionConfig {
     pub version_id: String,
     pub version_type: String,
-    pub main_class: String
+    pub main_class: String,
 }
 pub struct CommandUserConfig {
     pub user_type: String,
@@ -45,31 +45,43 @@ pub struct CommandUserConfig {
     pub uuid: String,
     pub xuid: String,
     pub access_token: String,
-    pub user_name: String
+    pub user_name: String,
 }
 impl Command {
     pub fn run(&self, run_type: RunType) {
         //println!("{}", self.java_home.clone());
 
-        match OperatingSystem::detect() { OperatingSystem::Linux => {
-            let chmod = std::process::Command::new("/bin/chmod")
-                .arg("+x")
-                .arg(self.java_home.clone().as_str())
-                .spawn();
+        match OperatingSystem::detect() {
+            OperatingSystem::Linux => {
+                let chmod = std::process::Command::new("/bin/chmod")
+                    .arg("+x")
+                    .arg(self.java_home.clone().as_str())
+                    .spawn();
 
-            chmod.unwrap().wait().unwrap();
+                chmod.unwrap().wait().unwrap();
             }
             _ => {}
         }
 
         let mut binding = std::process::Command::new(self.java_home.as_str());
-        let mut child = binding
+        let child = binding
             .arg(format!("-Djna.tmpdir={}", self.resources.bin))
             .arg(format!("-Dio.netty.native.workdir={}", self.resources.bin))
             .arg(format!("-Djava.library.path={}", self.resources.bin))
-            .arg(format!("-Dlog4j.configurationFile={}", self.resources.logger))
+            .arg(format!(
+                "-Dlog4j.configurationFile={}",
+                self.resources.logger
+            ))
             .arg("-cp")
-            .arg(format!("{}{}{}/*", self.resources.jar_file, (match OperatingSystem::detect() { OperatingSystem::Linux => ":", _ => ";" }), self.resources.libraries))
+            .arg(format!(
+                "{}{}{}/*",
+                self.resources.jar_file,
+                (match OperatingSystem::detect() {
+                    OperatingSystem::Linux => ":",
+                    _ => ";",
+                }),
+                self.resources.libraries
+            ))
             .arg(self.version.main_class.as_str())
             .arg("--version")
             .arg(self.version.version_id.as_str())
@@ -93,16 +105,26 @@ impl Command {
             .arg(self.assets.assets_dir.as_str())
             .arg("--gameDir")
             .arg(self.game_dir.as_str())
-            .arg(match &run_type { RunType::WORLD(name) => { "--quickPlaySingleplayer" }, RunType::SERVER(ip) => { "--quickPlayMultiplayer" }, RunType::NORMAL => { "" }   })
-            .arg(match run_type { RunType::WORLD(name) => { name }, RunType::SERVER(ip) => { ip }, RunType::NORMAL => { "" }.parse().unwrap() });
+            .arg(match &run_type {
+                RunType::WORLD(_) => "--quickPlaySingleplayer",
+                RunType::SERVER(_) => "--quickPlayMultiplayer",
+                RunType::NORMAL => "",
+            })
+            .arg(match run_type {
+                RunType::WORLD(name) => name,
+                RunType::SERVER(ip) => ip,
+                RunType::NORMAL => { "" }.parse().unwrap(),
+            });
 
         for arg in &self.args {
             child.arg(arg);
         }
 
-        let mut child = child.stdout(Stdio::piped())
+        let mut child = child
+            .stdout(Stdio::piped())
             .stderr(Stdio::piped())
-            .spawn().unwrap();
+            .spawn()
+            .unwrap();
 
         //println!("run");
         // Obtener el stdout del proceso hijo

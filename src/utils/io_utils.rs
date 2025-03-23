@@ -1,39 +1,8 @@
-use bytes::Bytes;
-use hex::encode;
-use std::fs;
-use std::fs::File;
-use std::io::{copy, Read, Write};
-use std::path::{Path, PathBuf};
-use std::time::Duration;
-use dwldutil::{DLBuilder, DLFile};
-
-pub fn verify_size(_path: &Path, _size: u64) -> bool {
-    // let file = File::open(_path).unwrap();
-    // let metadata = file.metadata().unwrap();
-
-    // metadata.len().eq(&_size)
-    true
-}
-
-fn get_parent_directory(path: &Path) -> Option<PathBuf> {
-    // Usa el método 'parent' para obtener el directorio padre
-    path.parent().map(|p| p.to_path_buf())
-}
-
 pub mod compress {
-    use crate::utils::io_utils;
-    use crate::utils::io_utils::system::OperatingSystem;
-    use crate::utils::io_utils::{get_resource_name, verify_size};
+    use crate::utils::io_utils::get_resource_name;
     use dwldutil::decompress::DLDecompressionConfig;
     use dwldutil::decompress::DecompressionMethod;
     use dwldutil::{DLBuilder, DLFile, DLHashes};
-    use flate2::read::GzDecoder;
-    use std::fs::{create_dir_all, File};
-    use std::io::{BufReader, Read};
-    use std::path::Path;
-    use std::{fs, io};
-    use tar::Archive;
-    use zip::ZipArchive;
 
     pub fn download(url: &str, destination: &str, _size: u64, _sha1: &String) {
         let binding = get_resource_name(url).unwrap();

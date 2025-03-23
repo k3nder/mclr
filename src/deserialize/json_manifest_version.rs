@@ -1,17 +1,16 @@
 use crate::deserialize::json_version;
 use dwldutil::{DLBuilder, DLFile};
 use serde::Deserialize;
-use std::fs::File;
-use std::io::Write;
 
 #[derive(Deserialize, Debug)]
 pub struct JsonVersion {
     pub id: String,
-    #[serde(rename = "type")]
-    pub versionType: String,
+    #[serde(alias = "type")]
+    pub version_type: String,
     pub url: String,
     pub time: String,
-    pub releaseTime: String,
+    #[serde(alias = "releaseTime")]
+    pub release_time: String,
 }
 impl JsonVersion {
     pub fn save(&self, file: &str) {
