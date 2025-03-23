@@ -1,32 +1,25 @@
+use crate::deserialize::json_version;
+use dwldutil::{DLBuilder, DLFile};
+use serde::Deserialize;
 use std::fs::File;
 use std::io::Write;
-use serde::Deserialize;
-use crate::deserialize::json_version;
-use crate::utils::sync_utils::sync;
 
 #[derive(Deserialize, Debug)]
 pub struct JsonVersion {
     pub id: String,
-    #[serde(rename = "type")] pub versionType: String,
+    #[serde(rename = "type")]
+    pub versionType: String,
     pub url: String,
     pub time: String,
-    pub releaseTime: String
+    pub releaseTime: String,
 }
 impl JsonVersion {
-    pub fn save(&self ,file: &str) {
-        let mut file_file = File::create(file).unwrap();
-        let response = ureq::get(self.url.as_str().replace("https", "http")).call().unwrap().body_mut().read_to_string().unwrap();
-        file_file.write_all(response.as_ref()).expect("TODO: panic message");
+    pub fn save(&self, file: &str) {
+        let dl = DLBuilder::new().add_file(DLFile::new().with_url(&self.url).with_path(file));
+        dl.start();
     }
     pub fn save_and_load(&self, file: &str) -> json_version::JsonVersion {
         self.save(file);
         json_version::load(file)
     }
-    //pub fn quilt_loader(v: &str) -> str {
-    //    //return sync().block_on(get_string(format!("https://meta.quiltmc.org/v3/versions/loader/{}", v).as_str()))
-    //}
-
-    //pub fn quilt(vanilla: &str, loader: &str) -> JsonVersion {
-//
-    //}
 }

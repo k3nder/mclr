@@ -1,28 +1,59 @@
-use std::string::String;
-use std::fs;
-use std::path::Path;
+use dwldutil::{DLBuilder, DLFile, DLStartConfig};
+
 use crate::deserialize::assets::Assets;
 use crate::deserialize::json_version::JsonVersion;
-use crate::utils::{CounterEvent, HandleEvent, io_utils};
-use crate::utils::io_utils::{download, verify_size};
+use crate::utils::io_utils::verify_size;
+use crate::utils::{io_utils, CounterEvent, HandleEvent};
+use std::fs;
+use std::io::Write;
+use std::path::Path;
+use std::string::String;
+use std::sync::Arc;
 
 const BASE_URL: &str = "https://resources.download.minecraft.net";
 
 pub fn save_indexes_load(file_str: &str, json: &JsonVersion) -> Assets {
     let indexes = &json.assetIndex;
-    io_utils::download(file_str, &indexes.clone().url);
+    let dl = DLBuilder::new().add_file(
+        DLFile::new()
+            .with_url(&indexes.clone().url)
+            .with_path(file_str),
+    );
+    dl.start();
     let content = std::fs::read_to_string(file_str).unwrap();
     serde_json::from_str(&content.as_str()).unwrap()
 }
 
-pub fn download_all(destination: &str, json_version: &JsonVersion,on_download: HandleEvent<String> , event: HandleEvent<CounterEvent>) {
+pub fn download_all(
+    destination: &str,
+    json_version: &JsonVersion,
+    on_download: HandleEvent<String>,
+    event: HandleEvent<CounterEvent>,
+) {
     download_all_url(destination, json_version, event, on_download, BASE_URL)
 }
-pub fn check(destination: &str, json_version: &JsonVersion, counter: HandleEvent<CounterEvent>) -> bool {
+pub fn check(
+    destination: &str,
+    json_version: &JsonVersion,
+    counter: HandleEvent<CounterEvent>,
+) -> bool {
     check_url(destination, json_version, counter, BASE_URL)
 }
-pub fn check_url(destination: &str, json_version: &JsonVersion, counter: HandleEvent<CounterEvent>, url: &str) -> bool {
-    let assets = &save_indexes_load(format!("{}/indexes/{}.json", destination, json_version.assets.clone().as_str()).as_str(), json_version);
+pub fn check_url(
+    destination: &str,
+    json_version: &JsonVersion,
+    counter: HandleEvent<CounterEvent>,
+    url: &str,
+) -> bool {
+    let assets = &save_indexes_load(
+        format!(
+            "{}/indexes/{}.json",
+            destination,
+            json_version.assets.clone().as_str()
+        )
+        .as_str(),
+        json_version,
+    );
     let mut index = 0;
     for (key, value) in &assets.objects {
         let hash = &value.hash;
@@ -48,9 +79,24 @@ pub fn check_url(destination: &str, json_version: &JsonVersion, counter: HandleE
     }
     true
 }
-pub fn download_all_url(destination: &str, json_version: &JsonVersion, event: HandleEvent<CounterEvent>, on_download: HandleEvent<String>, url: &str) {
-    let assets = &save_indexes_load(format!("{}/indexes/{}.json", destination, json_version.assets.clone().as_str()).as_str(), json_version);
+pub fn download_all_url(
+    destination: &str,
+    json_version: &JsonVersion,
+    event: HandleEvent<CounterEvent>,
+    on_download: HandleEvent<String>,
+    url: &str,
+) {
+    let assets = &save_indexes_load(
+        format!(
+            "{}/indexes/{}.json",
+            destination,
+            json_version.assets.clone().as_str()
+        )
+        .as_str(),
+        json_version,
+    );
     let mut index = 0;
+    let mut files = Vec::new();
     for (key, value) in &assets.objects {
         let hash = &value.hash;
         let block = &hash[..2];
@@ -67,14 +113,29 @@ pub fn download_all_url(destination: &str, json_version: &JsonVersion, event: Ha
         let object_path = format!("{}/objects/{}/{}", destination, block, hash);
         ////println!("{}::::{}", path, object_path);
         if !Path::new(&object_path).exists() {
-            download(&object_path, &url);
-        }
-        if !Path::new(&path).exists() {
-            download(&path, &url);
-            on_download.event(url);
+            let file = DLFile::new()
+                .with_url(&url)
+                .with_path(&object_path)
+                .with_size(value.size)
+                .with_on_download(Arc::new(move |obj_path| {
+                    if !Path::new(&path).exists() {
+                        let ppath = Path::new(&path);
+                        if let Some(parent) = ppath.parent() {
+                            fs::create_dir_all(parent).unwrap();
+                        }
+                        fs::copy(&obj_path, &path).expect("Failed to copy file");
+                    }
+                }));
+            files.push(file);
         }
         index += 1;
         event.event(CounterEvent::new(assets.objects.len(), index))
         ////println!("{}", block);
     }
+
+    let dl = DLBuilder::from_files(files);
+
+    let config = DLStartConfig::new().with_max_concurrent_downloads(5);
+
+    dl.start_with_config(config);
 }

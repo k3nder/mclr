@@ -1,15 +1,12 @@
-pub mod manifest;
 pub mod io_utils;
-pub mod sync_utils;
+pub mod manifest;
 pub struct HandleEvent<T> {
-    event: fn(T)
+    event: fn(T),
 }
 
 impl<T> HandleEvent<T> {
     pub fn new(event: fn(T)) -> Self {
-        HandleEvent {
-            event
-        }
+        HandleEvent { event }
     }
     pub fn event(&self, v: T) {
         (self.event)(v)
@@ -26,7 +23,7 @@ impl CounterEvent {
     pub fn new(t: usize, s: usize) -> CounterEvent {
         CounterEvent {
             total: t,
-            success: s
+            success: s,
         }
     }
 }
