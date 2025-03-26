@@ -1,6 +1,6 @@
 use dwldutil::cas::DLStorage;
 use dwldutil::decompress::{DLDecompressionConfig, DecompressionMethod};
-use dwldutil::{DLFile, Downloader};
+use dwldutil::{DLFile, DLHashes, Downloader};
 use log::debug;
 
 use crate::deserialize::json_version::{Library, LibraryDownloads, LibraryNatives, LibraryRule};
@@ -105,6 +105,7 @@ fn classifier_download(
                 .with_url(&n.url)
                 .with_path(&file)
                 .with_size(n.size)
+                .with_hashes(DLHashes::new().sha1(n.sha1.clone().as_str()))
                 .with_decompression_config(
                     DLDecompressionConfig::new(DecompressionMethod::Zip, binary_destination)
                         .with_delete_after(false),
@@ -133,6 +134,7 @@ fn artifact_download(
                 return Ok(DLFile::new()
                     .with_url(&a.clone().url)
                     .with_path(&file)
+                    .with_hashes(DLHashes::new().sha1(a.sha1.clone().as_str()))
                     .with_size(a.clone().size));
             } else {
                 return Err(format!("Not Allow by OS... {}", file));
@@ -141,6 +143,7 @@ fn artifact_download(
             debug!("Allow by no rules... {}", file);
             return Ok(DLFile::new()
                 .with_url(&a.clone().url)
+                .with_hashes(DLHashes::new().sha1(a.sha1.clone().as_str()))
                 .with_path(
                     format!(
                         "{}/{}",

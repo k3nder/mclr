@@ -13,11 +13,13 @@ mod tests {
                 RunType,
             },
         },
-        utils::{manifest::manifest, HandleEvent},
+        utils::{HandleEvent, manifest::manifest},
     };
 
     #[test]
     fn main() {
+        env_logger::init();
+
         if !Path::new("versions").exists() {
             fs::create_dir("versions").expect("Cannot create versions")
         }
@@ -43,7 +45,7 @@ mod tests {
         let libs = &version.clone().libraries;
 
         //while !mc::utils::libs_utils::verify(&*libs_path.clone(), json_version::load("versions/1.8.9/1.8.9.json").libraries) {
-        mc::utils::libs_utils::filter_libs(
+        mc::utils::libs_utils::find(
             &libs_path.clone(),
             binary_path.as_str(),
             &libs.clone(),
@@ -59,15 +61,16 @@ mod tests {
 
         mc::download(&jar_path, &version);
 
-        mc::utils::assets_utils::download_all(
+        mc::utils::assets_utils::find(
             "assets",
             &version,
             HandleEvent::new(|_| {
                 //println!("{}", e.percent())
             }),
-        );
+        )
+        .start();
         println!("{}", jar_path.as_str());
-
+        
         if let Some(logg) = &version.clone().logging {
             mc::get_config_logger(logg, "assets/log/log4j.xml");
         }
