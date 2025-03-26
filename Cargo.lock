@@ -1373,7 +1373,7 @@ dependencies = [
 
 [[package]]
 name = "mclr"
-version = "3.0.0"
+version = "3.1.0"
 dependencies = [
  "dwldutil",
  "env_logger 0.10.2",
