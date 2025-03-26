@@ -623,8 +623,10 @@ dependencies = [
 ]
 
 [[package]]
-name = "dwldutil_loc"
+name = "dwldutil"
 version = "2.0.2"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "ea8a38610a019fb3b7ff79ef69761754343665ec442f226936b65396e665a04b"
 dependencies = [
  "env_logger 0.11.7",
  "flate2",
@@ -1373,7 +1375,7 @@ dependencies = [
 name = "mclr"
 version = "3.1.4"
 dependencies = [
- "dwldutil_loc",
+ "dwldutil",
  "env_logger 0.10.2",
  "log",
  "serde",
