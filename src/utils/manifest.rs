@@ -1,7 +1,7 @@
 use std::fs::File;
 use std::io::Read;
 
-use dwldutil::{DLBuilder, DLFile};
+use dwldutil::{DLFile, Downloader};
 
 use crate::deserialize::json_manifest::Manifest;
 
@@ -9,7 +9,7 @@ pub fn manifest() -> Manifest {
     manifest_url("https://launchermeta.mojang.com/mc/game/version_manifest.json")
 }
 pub fn manifest_url(url: &str) -> Manifest {
-    let dl = DLBuilder::new().add_file(
+    let dl = Downloader::new().add_file(
         DLFile::new()
             .with_url(url)
             .with_path("version_manifest.json"),

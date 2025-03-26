@@ -1,5 +1,6 @@
+use dwldutil::cas::DLStorage;
 use dwldutil::decompress::{DLDecompressionConfig, DecompressionMethod};
-use dwldutil::{DLBuilder, DLFile};
+use dwldutil::{DLFile, Downloader};
 use log::debug;
 
 use crate::deserialize::json_version::{Library, LibraryDownloads, LibraryNatives, LibraryRule};
@@ -43,14 +44,15 @@ impl MavenLibrary {
     }
 }
 
-pub fn filter_libs(
+pub fn find(
     destination: &str,
     binary_destination: &str,
     libs: &Vec<Library>,
     event: HandleEvent<CounterEvent>,
-) -> Result<DLBuilder, String> {
+) -> Result<Downloader, String> {
     let mut index = 0;
     let mut filtered_files: Vec<DLFile> = Vec::new();
+    let storage = DLStorage::new(".libs");
     for lib in libs {
         debug!("Checking... {}", &lib.clone().name.as_str());
         let natives = &&lib.clone().natives;
@@ -58,13 +60,13 @@ pub fn filter_libs(
             // artifact
             debug!("Downloading as artifact...");
             match artifact_download(destination, &lib, &downloads) {
-                Ok(file) => filtered_files.push(file),
+                Ok(file) => filtered_files.push(file.with_cas(storage.clone())),
                 Err(e) => debug!("Error downloading artifact: {}", e),
             }
             // classfiers
             debug!("Downloading as classifier...");
             match classifier_download(destination, binary_destination, natives, &downloads) {
-                Ok(file) => filtered_files.push(file),
+                Ok(file) => filtered_files.push(file.with_cas(storage.clone())),
                 Err(e) => debug!("Error downloading classifier: {}", e),
             }
         } else {
@@ -72,13 +74,14 @@ pub fn filter_libs(
             filtered_files.push(
                 DLFile::new()
                     .with_url(lib.all_url().as_str())
-                    .with_path(format!("{}/{}", destination, lib.cl_name().as_str()).as_str()),
+                    .with_path(format!("{}/{}", destination, lib.cl_name().as_str()).as_str())
+                    .with_cas(storage.clone()),
             );
         }
         index += 1;
         event.event(CounterEvent::new(libs.len(), index));
     }
-    Ok(DLBuilder::from_files(filtered_files))
+    Ok(Downloader::from_files(filtered_files))
 }
 
 fn classifier_download(

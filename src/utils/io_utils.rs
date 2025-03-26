@@ -2,13 +2,13 @@ pub mod compress {
     use crate::utils::io_utils::get_resource_name;
     use dwldutil::decompress::DLDecompressionConfig;
     use dwldutil::decompress::DecompressionMethod;
-    use dwldutil::{DLBuilder, DLFile, DLHashes};
+    use dwldutil::{DLFile, DLHashes, Downloader};
 
     pub fn download(url: &str, destination: &str, _size: u64, _sha1: &String) {
         let binding = get_resource_name(url).unwrap();
         let file: &str = binding.as_str();
 
-        let dl = DLBuilder::new().add_file(
+        let dl = Downloader::new().add_file(
             DLFile::new()
                 .with_url(url)
                 .with_path(file)

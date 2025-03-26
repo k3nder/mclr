@@ -1,5 +1,5 @@
 use crate::deserialize::json_version;
-use dwldutil::{DLBuilder, DLFile};
+use dwldutil::{DLFile, Downloader};
 use serde::Deserialize;
 
 #[derive(Deserialize, Debug)]
@@ -14,7 +14,7 @@ pub struct JsonVersion {
 }
 impl JsonVersion {
     pub fn save(&self, file: &str) {
-        let dl = DLBuilder::new().add_file(DLFile::new().with_url(&self.url).with_path(file));
+        let dl = Downloader::new().add_file(DLFile::new().with_url(&self.url).with_path(file));
         dl.start();
     }
     pub fn save_and_load(&self, file: &str) -> json_version::JsonVersion {

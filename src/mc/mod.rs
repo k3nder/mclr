@@ -3,7 +3,7 @@ pub mod utils;
 use crate::deserialize::json_version::{Client, JavaVersion, JsonVersion, LogSettings};
 use crate::utils::io_utils;
 use crate::utils::io_utils::compress;
-use dwldutil::{DLBuilder, DLFile};
+use dwldutil::{DLFile, Downloader};
 use io_utils::system::OperatingSystem;
 use std::path::Path;
 
@@ -55,7 +55,7 @@ pub fn get_compatible_java(destination: &str, version: &JavaVersion) -> String {
     })
 }
 pub fn get_config_logger(log: &LogSettings, destination: &str) {
-    let dl = DLBuilder::new().add_file(
+    let dl = Downloader::new().add_file(
         DLFile::new()
             .with_url(&log.client.file.url)
             .with_path(destination),
@@ -95,6 +95,6 @@ pub fn download(destination: &str, json_version: &JsonVersion) {
 fn download_jar(client: &Client, file_str: &str) {
     let _path = Path::new(file_str);
 
-    let dl = DLBuilder::new().add_file(DLFile::new().with_url(&client.url).with_path(file_str));
+    let dl = Downloader::new().add_file(DLFile::new().with_url(&client.url).with_path(file_str));
     dl.start();
 }
